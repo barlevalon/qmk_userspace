@@ -1,6 +1,6 @@
 {
     "userspace_version": "1.0",
     "build_targets": [
-        ["bastardkb/charybids/3x6/", "hearter"]
+        ["bastardkb/charybdis/3x6/", "hearter"]
     ]
 }
