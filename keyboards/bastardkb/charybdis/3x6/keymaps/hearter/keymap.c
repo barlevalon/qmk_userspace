@@ -58,7 +58,7 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define PIPE S(KC_BSLS)
 #define LPAREN S(KC_9)
 #define RPAREN S(KC_0)
-#define UNDSCR S(KC_MNS)
+#define UNDSCR S(KC_MINS)
 
 // Left-hand home row mods
 #define HOME_A LCTL_T(KC_A)
