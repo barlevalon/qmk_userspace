@@ -78,7 +78,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
         case TMUX:
             if (record->event.pressed) {
                 // on press
-                SEND_STRING(SS_LALT("t") SS_DELAY(200) "`t")
+                SEND_STRING(SS_LALT("t") SS_DELAY(200) "`t");
             }
             break;
     }
