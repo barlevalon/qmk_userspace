@@ -56,6 +56,9 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define CLN S(KC_SCLN)
 #define TLD S(KC_GRV)
 #define PIPE S(KC_BSLS)
+#define LPAREN S(KC_9)
+#define RPAREN S(KC_0)
+#define UNDSCR S(KC_MNS)
 
 // Left-hand home row mods
 #define HOME_A LCTL_T(KC_A)
@@ -119,7 +122,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, TLD,   S(KC_1),  S(KC_2),  S(KC_3),    PIPE,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  XXXXXXX, XXXXXXX, XXXXXXX,    _______, XXXXXXX
+                                  LPAREN,  RPAREN,  UNDSCR,     _______, XXXXXXX
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 
