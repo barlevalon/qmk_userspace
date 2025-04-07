@@ -47,7 +47,7 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define PT_Z LT(LAYER_POINTER, KC_Z)
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 
-#define ONE_PASS LGUI_T(KC_BSLS)
+#define ONE_PASS G(KC_BSLS)
 #define TABS LCAG(KC_T)
 #define RAYC G(KC_SPC)
 #define LEADER HYPR(KC_SPACE)
