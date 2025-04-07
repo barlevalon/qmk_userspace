@@ -40,10 +40,10 @@ static uint16_t auto_pointer_layer_timer = 0;
 #    endif // CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_THRESHOLD
 #endif     // CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_ENABLE
 
-#define NUM_BSPC LT(LAYER_NUM, KC_TAB)
+#define NUM_BSPC LT(LAYER_NUM, KC_BSPC)
 #define SYM_ENT LT(LAYER_SYM, KC_ENT)
 #define NAV_SPC LT(LAYER_NAV, KC_SPC)
-#define MED_BSPC LT(LAYER_MEDIA, KC_BSPC)
+#define MED_ESC LT(LAYER_MEDIA, KC_ESC)
 #define PT_Z LT(LAYER_POINTER, KC_Z)
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 
@@ -95,7 +95,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        ONE_PASS,   PT_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, PT_SLSH, LEADER,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  MED_BSPC, NAV_SPC, KC_TAB,    SYM_ENT, NUM_BSPC
+                                  MED_ESC, NAV_SPC, KC_TAB,    SYM_ENT, NUM_BSPC
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 
