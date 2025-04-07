@@ -48,7 +48,6 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 
 #define ONE_PASS LGUI_T(KC_BSLS)
-#define TMUX XXXXXXX
 #define TABS LCAG(KC_T)
 #define RAYC G(KC_SPC)
 #define LEADER HYPR(KC_SPACE)
@@ -69,6 +68,22 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define HOME_K RGUI_T(KC_K)
 #define HOME_L LALT_T(KC_L)
 #define HOME_QUO RCTL_T(KC_QUOT)
+
+enum custom_keycodes {
+    TMUX = SAFE_RANGE,
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    switch(keycode) {
+        case TMUX:
+            if (record->event.pressed) {
+                // on press
+                SEND_STRING(SS_LALT("t") SS_DELAY(200) "`t")
+            }
+            break;
+    }
+    return true;
+}
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
