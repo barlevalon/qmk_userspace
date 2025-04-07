@@ -95,7 +95,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        ONE_PASS,   PT_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, PT_SLSH, LEADER,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  LT(LAYER_MEDIA, KC_ESC), NAV_SPC, KC_TAB,    SYM_ENT, LT(LAYER_NUM, KC_BSPC)
+                                  MED_ESC, NAV_SPC, KC_TAB,    SYM_ENT, NUM_BSPC
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 
