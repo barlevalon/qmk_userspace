@@ -51,7 +51,7 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define TMUX XXXXXXX
 #define TABS LCAG(KC_T)
 #define RAYC G(KC_SPC)
-#define LEADER HYPER(KC_SPACE)
+#define LEADER HYPR(KC_SPACE)
 #define LCRLY S(KC_LBRC)
 #define RCRLY S(KC_RBRC)
 #define CLN S(KC_SCLN)
