@@ -35,8 +35,8 @@
 #define CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_ENABLE
 
 // Time in milliseconds to wait before turning off the pointer layer
-#define CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_TIMEOUT_MS 3000
+#define CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_TIMEOUT_MS 2000
 
 // Threshold for pointer movement to trigger the pointer layer
-#define CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_THRESHOLD 5
+#define CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_THRESHOLD 7
 #endif // POINTING_DEVICE_ENABLE
