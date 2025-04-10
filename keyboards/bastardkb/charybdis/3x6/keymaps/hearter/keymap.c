@@ -77,26 +77,24 @@ enum custom_keycodes {
     TMUX = SAFE_RANGE,
 };
 
-// Track home row shift state
-static bool home_row_shift_active = false;
-
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    uint8_t mod_state = get_mods();
+    
     switch(keycode) {
-        case HOME_F:
-        case HOME_J:
-            if (record->event.pressed) {
-                home_row_shift_active = true;
-            } else {
-                home_row_shift_active = false;
-            }
-            return true;
-            
         case NUM_BSPC:
+        case KC_BSPC:  // Handle both the layer-tap version and regular backspace
             if (record->event.pressed) {
-                // Check if shift is being held using both our flag and the actual modifier state
-                if (home_row_shift_active && (get_mods() & MOD_MASK_SHIFT)) {
-                    // Shift+Backspace condition met - send Delete
+                // Directly check if shift is active when backspace is pressed
+                if (mod_state & MOD_MASK_SHIFT) {
+                    // Clear shift temporarily
+                    uint8_t temp_mod_state = mod_state & (~MOD_MASK_SHIFT);
+                    set_mods(temp_mod_state);
+                    
+                    // Send delete
                     tap_code(KC_DEL);
+                    
+                    // Restore mods
+                    set_mods(mod_state);
                     return false; // Skip default processing
                 }
             }
