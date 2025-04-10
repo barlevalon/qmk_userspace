@@ -16,14 +16,6 @@
  */
 #include QMK_KEYBOARD_H
 
-// Define key overrides
-const key_override_t shift_bspc_del = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
-
-// Array of key overrides
-const key_override_t *key_overrides[] = {
-    &shift_bspc_del,
-    NULL
-};
 
 enum charybdis_keymap_layers {
     LAYER_BASE = 0,
@@ -85,8 +77,31 @@ enum custom_keycodes {
     TMUX = SAFE_RANGE,
 };
 
+// Track home row shift state
+static bool home_row_shift_active = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch(keycode) {
+        case HOME_F:
+        case HOME_J:
+            if (record->event.pressed) {
+                home_row_shift_active = true;
+            } else {
+                home_row_shift_active = false;
+            }
+            return true;
+            
+        case NUM_BSPC:
+            if (record->event.pressed) {
+                // Check if shift is being held using both our flag and the actual modifier state
+                if (home_row_shift_active && (get_mods() & MOD_MASK_SHIFT)) {
+                    // Shift+Backspace condition met - send Delete
+                    tap_code(KC_DEL);
+                    return false; // Skip default processing
+                }
+            }
+            return true;
+            
         case TMUX:
             if (record->event.pressed) {
                 // on press
