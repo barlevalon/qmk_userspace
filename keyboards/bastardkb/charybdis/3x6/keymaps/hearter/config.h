@@ -26,6 +26,9 @@
 #    define NO_ACTION_ONESHOT
 #endif // __arm__
 
+/* Enable Key Override feature */
+#define KEY_OVERRIDE_ENABLE
+
 /* Charybdis-specific features. */
 
 #ifdef POINTING_DEVICE_ENABLE

@@ -16,6 +16,15 @@
  */
 #include QMK_KEYBOARD_H
 
+// Define key override: Shift + Backspace = Delete
+const key_override_t shift_bspc_del = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+
+// List of key overrides
+const key_override_t **key_overrides = (const key_override_t *[]){
+    &shift_bspc_del,
+    NULL
+};
+
 enum charybdis_keymap_layers {
     LAYER_BASE = 0,
     LAYER_NUM,
