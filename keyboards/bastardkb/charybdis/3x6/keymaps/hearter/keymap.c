@@ -81,8 +81,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     uint8_t mod_state = get_mods();
     
     switch(keycode) {
-        case NUM_BSPC:
-        case KC_BSPC:  // Handle both the layer-tap version and regular backspace
+        case KC_BSPC:  // Regular backspace only
             if (record->event.pressed) {
                 // Directly check if shift is active when backspace is pressed
                 if (mod_state & MOD_MASK_SHIFT) {
@@ -97,6 +96,24 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                     set_mods(mod_state);
                     return false; // Skip default processing
                 }
+            }
+            return true;
+            
+        case NUM_BSPC:
+            if (record->event.pressed && (mod_state & MOD_MASK_SHIFT) && record->tap.count > 0) {
+                // Only handle the tap behavior, not the hold (layer) behavior
+                // This way we allow holding to activate the layer while still handling taps
+                
+                // Clear shift temporarily
+                uint8_t temp_mod_state = mod_state & (~MOD_MASK_SHIFT);
+                set_mods(temp_mod_state);
+                
+                // Send delete
+                tap_code(KC_DEL);
+                
+                // Restore mods
+                set_mods(mod_state);
+                return false; // Skip default processing
             }
             return true;
             
