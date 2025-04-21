@@ -79,7 +79,7 @@ enum custom_keycodes {
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     uint8_t mod_state = get_mods();
-    
+
     switch(keycode) {
         case KC_BSPC:  // Regular backspace only
             if (record->event.pressed) {
@@ -88,35 +88,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                     // Clear shift temporarily
                     uint8_t temp_mod_state = mod_state & (~MOD_MASK_SHIFT);
                     set_mods(temp_mod_state);
-                    
+
                     // Send delete
                     tap_code(KC_DEL);
-                    
+
                     // Restore mods
                     set_mods(mod_state);
                     return false; // Skip default processing
                 }
             }
             return true;
-            
+
         case NUM_BSPC:
             if (record->event.pressed && (mod_state & MOD_MASK_SHIFT) && record->tap.count > 0) {
                 // Only handle the tap behavior, not the hold (layer) behavior
                 // This way we allow holding to activate the layer while still handling taps
-                
+
                 // Clear shift temporarily
                 uint8_t temp_mod_state = mod_state & (~MOD_MASK_SHIFT);
                 set_mods(temp_mod_state);
-                
+
                 // Send delete
                 tap_code(KC_DEL);
-                
+
                 // Restore mods
                 set_mods(mod_state);
                 return false; // Skip default processing
             }
             return true;
-            
+
         case TMUX:
             if (record->event.pressed) {
                 // on press
@@ -155,7 +155,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [LAYER_SYM] = LAYOUT(
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
-       XXXXXXX, LCRLY, S(KC_7),  S(KC_8),  S(KC_9), LCRLY,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       XXXXXXX, LCRLY, S(KC_7),  S(KC_8),  S(KC_9), RCRLY,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, CLN,   S(KC_4),  S(KC_5),  S(KC_6), KC_PPLS,    XXXXXXX, KC_RSFT, KC_RGUI, KC_RALT, KC_RCTL, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
