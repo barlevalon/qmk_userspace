@@ -192,12 +192,9 @@ bool oled_task_user(void) {
     
     if (is_keyboard_master()) {
         // Left OLED - Show current layer and mods
-        // Header
-        oled_set_cursor(0, 0);
-        oled_write_P(PSTR("LAYER:"), false);
         
         // Layer name - large and clear
-        oled_set_cursor(0, 2);
+        oled_set_cursor(0, 0);
         switch (get_highest_layer(layer_state)) {
             case LAYER_BASE:
                 oled_write_P(PSTR("BASE"), false);
@@ -221,54 +218,25 @@ bool oled_task_user(void) {
                 oled_write_P(PSTR("???"), false);
         }
         
-        // Show modifier status
-        oled_set_cursor(0, 4);
-        oled_write_P(PSTR("MODS:"), false);
-        
-        // Display modifiers on a single line
-        oled_set_cursor(0, 5);
+        // Show modifier status - single character indicators
+        oled_set_cursor(0, 2);
         uint8_t mod_state = get_mods();
         
-        // Show mod status with visible indicators
-        if (mod_state & MOD_MASK_SHIFT) {
-            oled_write_P(PSTR("SFT "), false);
-        } else {
-            oled_write_P(PSTR("    "), false);
-        }
-        
-        oled_set_cursor(0, 6);
-        if (mod_state & MOD_MASK_CTRL) {
-            oled_write_P(PSTR("CTL "), false);
-        } else {
-            oled_write_P(PSTR("    "), false);
-        }
-        
-        oled_set_cursor(4, 5);
-        if (mod_state & MOD_MASK_ALT) {
-            oled_write_P(PSTR("ALT "), false);
-        } else {
-            oled_write_P(PSTR("    "), false);
-        }
-        
-        oled_set_cursor(4, 6);
-        if (mod_state & MOD_MASK_GUI) {
-            oled_write_P(PSTR("GUI "), false);
-        } else {
-            oled_write_P(PSTR("    "), false);
-        }
+        char mods[5] = "    ";
+        if (mod_state & MOD_MASK_SHIFT) mods[0] = 'S';
+        if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
+        if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
+        if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
+        oled_write(mods, false);
     } else {
-        // Right OLED - Show keyboard info
-        oled_set_cursor(0, 1);
-        oled_write_P(PSTR("CORNE"), false);
-        
-        oled_set_cursor(0, 3);
-        oled_write_P(PSTR("KEYBOARD"), false);
-        
+        // Right OLED - Show only WPM counter
 #ifdef WPM_ENABLE
         // Show WPM counter
-        oled_set_cursor(0, 5);
-        oled_write_P(PSTR("WPM: "), false);
-        oled_write(get_u8_str(get_current_wpm(), '0'), false);
+        oled_set_cursor(0, 0);
+        oled_write_P(PSTR("WPM"), false);
+        
+        oled_set_cursor(0, 2);
+        oled_write(get_u8_str(get_current_wpm(), ' '), false);
 #endif
     }
     
