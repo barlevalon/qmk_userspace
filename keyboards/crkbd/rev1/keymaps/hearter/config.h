@@ -39,10 +39,6 @@
 /* RGB configuration */
 #ifdef RGBLIGHT_ENABLE
 #    define RGBLIGHT_ANIMATIONS             // Enable all animations
-#    define RGBLIGHT_HUE_STEP 8             // Number of steps to cycle through the hue
-#    define RGBLIGHT_SAT_STEP 8             // Number of steps to increment the saturation
-#    define RGBLIGHT_VAL_STEP 8             // Number of steps to increment the brightness
-#    define RGBLIGHT_LIMIT_VAL 255          // Maximum brightness level
 #    define RGBLIGHT_SLEEP                  // Turn off LEDs when computer goes to sleep
 #endif
 
