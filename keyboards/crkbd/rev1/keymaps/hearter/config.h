@@ -32,7 +32,6 @@
 
 /* Improved key press behavior */
 #define TAPPING_TERM 175
-#define IGNORE_MOD_TAP_INTERRUPT
 #define PERMISSIVE_HOLD
 
 /* Split keyboard specific */
