@@ -5,6 +5,9 @@ CAPS_WORD_ENABLE = yes
 OLED_ENABLE = yes
 OLED_DRIVER = ssd1306
 
+# Enable WPM counter (typing speed)
+WPM_ENABLE = yes
+
 # RGB configuration (adjust as needed for your setup)
 RGBLIGHT_ENABLE = yes
 RGB_MATRIX_ENABLE = no

@@ -74,6 +74,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 }
 
 #ifdef OLED_ENABLE
+
+// WPM-responsive animation stuff here
+#define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
+uint32_t anim_timer = 0;
+uint8_t current_frame = 0;
+
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     if (is_keyboard_master()) {
         return OLED_ROTATION_270;
@@ -81,49 +87,147 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return rotation;
 }
 
-void oled_render_layer_state(void) {
-    oled_write_P(PSTR("Layer: "), false);
-    switch (get_highest_layer(layer_state)) {
-        case LAYER_BASE:
-            oled_write_P(PSTR("Base\n"), false);
-            break;
-        case LAYER_NUM:
-            oled_write_P(PSTR("Num\n"), false);
-            break;
-        case LAYER_SYM:
-            oled_write_P(PSTR("Sym\n"), false);
-            break;
-        case LAYER_NAV:
-            oled_write_P(PSTR("Nav\n"), false);
-            break;
-        case LAYER_MEDIA:
-            oled_write_P(PSTR("Media\n"), false);
-            break;
-        case LAYER_FN:
-            oled_write_P(PSTR("Function\n"), false);
-            break;
-        default:
-            oled_write_P(PSTR("Undef\n"), false);
+// Write a pixelated bar graph that fills from bottom to top
+void render_bar_graph(uint8_t value, uint8_t max_value) {
+    uint8_t bar_height = ((uint16_t)value * 8) / max_value;
+    
+    for (uint8_t i = 0; i < 4; i++) {
+        uint8_t height_in_row = bar_height > i*2 ? (bar_height - i*2 > 2 ? 2 : bar_height - i*2) : 0;
+        
+        switch (height_in_row) {
+            case 0:
+                oled_write_P(PSTR("  "), false); // Empty
+                break;
+            case 1:
+                oled_write_P(PSTR("▄ "), false); // Half block bottom
+                break;
+            case 2:
+                oled_write_P(PSTR("█ "), false); // Full block
+                break;
+        }
     }
 }
 
+// Print current layer with a visual indicator
+void render_layer_state(void) {
+    oled_write_P(PSTR("LAYER"), false);
+    oled_write_P(PSTR("\n"), false);
+    
+    switch (get_highest_layer(layer_state)) {
+        case LAYER_BASE:
+            oled_write_P(PSTR(" BASE "), false);
+            break;
+        case LAYER_NUM:
+            oled_write_P(PSTR(" NUM  "), false);
+            break;
+        case LAYER_SYM:
+            oled_write_P(PSTR(" SYM  "), false);
+            break;
+        case LAYER_NAV:
+            oled_write_P(PSTR(" NAV  "), false);
+            break;
+        case LAYER_MEDIA:
+            oled_write_P(PSTR(" MEDIA"), false);
+            break;
+        case LAYER_FN:
+            oled_write_P(PSTR(" FUNC "), false);
+            break;
+        default:
+            oled_write_P(PSTR("????  "), false);
+    }
+}
+
+// Print current modifier state
+void render_mod_status(uint8_t modifiers) {
+    oled_write_P(PSTR("\nMODS\n"), false);
+    oled_write_P(PSTR(" "), false);
+    oled_write_P((modifiers & MOD_MASK_SHIFT) ? PSTR("S") : PSTR(" "), false);
+    oled_write_P((modifiers & MOD_MASK_CTRL) ? PSTR("C") : PSTR(" "), false);
+    oled_write_P((modifiers & MOD_MASK_ALT) ? PSTR("A") : PSTR(" "), false);
+    oled_write_P((modifiers & MOD_MASK_GUI) ? PSTR("G") : PSTR(" "), false);
+}
+
+// Print caps lock indicator
+void render_caps_lock(bool caps_on) {
+    oled_write_P(PSTR("\nCAPS"), false);
+    oled_write_P(PSTR("\n "), false);
+    oled_write_P(caps_on ? PSTR("[ON]") : PSTR("    "), false);
+}
+
+// Render keylogger (last pressed key)
+void render_keylogger(void) {
+    oled_write_P(PSTR("\nLAST"), false);
+    oled_write_P(PSTR("\n "), false);
+    
+    // This would need a key logger implementation
+    // For now just display a placeholder
+    oled_write_P(PSTR("KEY"), false);
+}
+
+// Render WPM counter
+void render_wpm(void) {
+#ifdef WPM_ENABLE
+    oled_write_P(PSTR("\nWPM\n "), false);
+    
+    uint8_t n = get_current_wpm();
+    char wpm_str[4];
+    wpm_str[3] = '\0';
+    wpm_str[2] = '0' + n % 10;
+    wpm_str[1] = '0' + (n /= 10) % 10;
+    wpm_str[0] = '0' + n / 10;
+    oled_write(wpm_str, false);
+    
+#else
+    oled_write_P(PSTR("\nWPM\n ---"), false);
+#endif
+}
+
+// Simple Corne logo
+static void render_corne_logo(void) {
+    static const char PROGMEM corne_logo[] = {
+        0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0x90, 0x91, 0x92, 0x93, 0x94,
+        0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4,
+        0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4,
+        0
+    };
+    oled_write_P(corne_logo, false);
+}
+
+// Main OLED task function
 bool oled_task_user(void) {
     if (is_keyboard_master()) {
-        // Host Keyboard Layer Status
-        oled_render_layer_state();
-        // Host Keyboard LED Status
+        // Left OLED - Status display
+        render_layer_state();
+        render_mod_status(get_mods()|get_oneshot_mods());
         led_t led_state = host_keyboard_led_state();
-        oled_write_P(led_state.caps_lock ? PSTR("CAPS  ") : PSTR("      "), false);
+        render_caps_lock(led_state.caps_lock);
+        render_wpm();
     } else {
-        // Display logo on slave side
-        static const char PROGMEM crkbd_logo[] = {
-            0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0x90, 0x91, 0x92, 0x93, 0x94,
-            0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4,
-            0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4,
-            0};
-        oled_write_P(crkbd_logo, false);
+        // Right OLED - Corne Logo & Animation
+        render_corne_logo();
+        
+        // Show WPM-based animation if WPM tracking is enabled
+#ifdef WPM_ENABLE
+        // Update animation frame based on WPM
+        void animate_luna(void) {
+            // Add simple animation here if desired
+        }
+        
+        if (timer_elapsed32(anim_timer) > ANIM_FRAME_DURATION) {
+            anim_timer = timer_read32();
+            current_frame = (current_frame + 1) % 6;
+            uint8_t wpm = get_current_wpm();
+            
+            // Draw WPM indicator
+            oled_set_cursor(0, 7);
+            oled_write_P(PSTR("WPM:"), false);
+            oled_set_cursor(4, 7);
+            render_bar_graph(wpm, 100);
+        }
+#endif
     }
-    return false; // Continue with default oled task
+    
+    return false;
 }
 #endif
 
