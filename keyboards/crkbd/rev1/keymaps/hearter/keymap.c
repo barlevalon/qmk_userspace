@@ -86,30 +86,37 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return rotation;
 }
 
-// This function runs when bootloader mode is activated
-void reset_keyboard_kb(void) {
+// Custom bootmagic handling for RGB indicators
+void bootmagic_lite_reset_handler(void) {
 #ifdef RGBLIGHT_ENABLE
-    // Set all LEDs to a flashing red to indicate bootloader mode
-    rgblight_enable_noeeprom();          // Turn on RGB without saving to EEPROM
-    rgblight_mode_noeeprom(1);           // Set to solid color mode
-    rgblight_sethsv_noeeprom(HSV_RED);   // Set color to bright red
+    // Flash all LEDs red as bootloader indication
+    rgblight_enable_noeeprom();
     
-    // Allow time for the effect to be visible
-    wait_ms(300);
+    // Several bright flashes to make it very obvious
+    for (int i = 0; i < 5; i++) {
+        rgblight_setrgb(RGB_RED);
+        wait_ms(50);
+        rgblight_setrgb(RGB_OFF);
+        wait_ms(50);
+    }
     
-    // Flash the LEDs for extra visual confirmation
-    rgblight_sethsv_noeeprom(HSV_OFF);
-    wait_ms(100);
-    rgblight_sethsv_noeeprom(HSV_RED);
-    wait_ms(100);
-    rgblight_sethsv_noeeprom(HSV_OFF);
-    wait_ms(100);
-    rgblight_sethsv_noeeprom(HSV_RED);
+    // Solid red for a moment before bootloader
+    rgblight_setrgb(RGB_RED);
     wait_ms(100);
 #endif
+}
 
-    // Continue with the standard reset procedure
-    reset_keyboard();
+// Direct keyboard reset function - called by QK_BOOT
+void reset_keyboard(void) {
+#ifdef RGBLIGHT_ENABLE
+    // Final red flash before reset
+    rgblight_enable_noeeprom();
+    rgblight_setrgb(RGB_RED);
+    wait_ms(250);
+#endif
+
+    // Jump to bootloader
+    bootloader_jump();
 }
 
 // Write a pixelated bar graph that fills from bottom to top
