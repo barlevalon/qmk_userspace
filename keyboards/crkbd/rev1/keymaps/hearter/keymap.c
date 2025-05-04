@@ -89,20 +89,15 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 // This function runs when bootloader mode is activated
 void reset_keyboard_kb(void) {
 #ifdef RGBLIGHT_ENABLE
-    // First, save the current RGB state
-    bool enabled = rgblight_is_enabled();
-    uint8_t mode = rgblight_get_mode();
-    
     // Set all LEDs to a flashing red to indicate bootloader mode
-    rgblight_enable_noeeprom();                  // Turn on RGB without saving to EEPROM
-    rgblight_mode_noeeprom(RGBLIGHT_MODE_BREATHING + 3); // Fast, dramatic breathing
-    rgblight_sethsv_noeeprom(HSV_RED);           // Set color to bright red
-    rgblight_set_speed(255);                     // Set to maximum speed
+    rgblight_enable_noeeprom();          // Turn on RGB without saving to EEPROM
+    rgblight_mode_noeeprom(1);           // Set to solid color mode
+    rgblight_sethsv_noeeprom(HSV_RED);   // Set color to bright red
     
     // Allow time for the effect to be visible
-    wait_ms(500);
+    wait_ms(300);
     
-    // Flash the LEDs one more time for extra visual confirmation
+    // Flash the LEDs for extra visual confirmation
     rgblight_sethsv_noeeprom(HSV_OFF);
     wait_ms(100);
     rgblight_sethsv_noeeprom(HSV_RED);
