@@ -5,8 +5,8 @@ CAPS_WORD_ENABLE = yes
 OLED_ENABLE = yes
 # OLED driver is automatically set to SSD1306
 
-# Enable WPM counter (typing speed)
-WPM_ENABLE = yes
+# Disabled WPM counter
+WPM_ENABLE = no
 
 # We've disabled oneshot keys in config.h
 ONESHOT_ENABLE = no

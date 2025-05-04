@@ -77,11 +77,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
 #ifdef OLED_ENABLE
 
-// WPM-responsive animation stuff here
-#define ANIM_FRAME_DURATION 200  // how long each frame lasts in ms
-uint32_t anim_timer = 0;
-uint8_t current_frame = 0;
-
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return rotation;
 }
@@ -126,26 +121,6 @@ bool shutdown_user(bool jump_to_bootloader) {
     return false;
 }
 
-// Write a pixelated bar graph that fills from bottom to top
-void render_bar_graph(uint8_t value, uint8_t max_value) {
-    uint8_t bar_height = ((uint16_t)value * 8) / max_value;
-    
-    for (uint8_t i = 0; i < 4; i++) {
-        uint8_t height_in_row = bar_height > i*2 ? (bar_height - i*2 > 2 ? 2 : bar_height - i*2) : 0;
-        
-        switch (height_in_row) {
-            case 0:
-                oled_write_P(PSTR("  "), false); // Empty
-                break;
-            case 1:
-                oled_write_P(PSTR("▄ "), false); // Half block bottom
-                break;
-            case 2:
-                oled_write_P(PSTR("█ "), false); // Full block
-                break;
-        }
-    }
-}
 
 // Print current layer with a visual indicator
 void render_layer_state(void) {
