@@ -195,38 +195,36 @@ static void render_corne_logo(void) {
 
 // Main OLED task function
 bool oled_task_user(void) {
-    // Clear the display at the start to ensure clean rendering
-    oled_clear();
-    
     if (is_keyboard_master()) {
-        // Left OLED - Status display
-        render_layer_state();
-        render_mod_status(get_mods());
-        led_t led_state = host_keyboard_led_state();
-        render_caps_lock(led_state.caps_lock);
-        render_wpm();
-    } else {
-        // Right OLED - Corne Logo & Animation
-        render_corne_logo();
-        
-        // Show WPM-based animation if WPM tracking is enabled
-#ifdef WPM_ENABLE
-        // Update animation frame based on WPM
-        if (timer_elapsed32(anim_timer) > ANIM_FRAME_DURATION) {
-            anim_timer = timer_read32();
-            current_frame = (current_frame + 1) % 6;
-            uint8_t wpm = get_current_wpm();
-            
-            // Draw WPM indicator
-            oled_set_cursor(0, 7);
-            oled_write_P(PSTR("WPM:"), false);
-            oled_set_cursor(4, 7);
-            render_bar_graph(wpm, 100);
+        // Left OLED - Simple status display
+        oled_write_P(PSTR("Layer: "), false);
+        switch (get_highest_layer(layer_state)) {
+            case LAYER_BASE:
+                oled_write_P(PSTR("Base\n"), false);
+                break;
+            case LAYER_NUM:
+                oled_write_P(PSTR("Num\n"), false);
+                break;
+            case LAYER_SYM:
+                oled_write_P(PSTR("Sym\n"), false);
+                break;
+            case LAYER_NAV:
+                oled_write_P(PSTR("Nav\n"), false);
+                break;
+            case LAYER_MEDIA:
+                oled_write_P(PSTR("Media\n"), false);
+                break;
+            case LAYER_FN:
+                oled_write_P(PSTR("Func\n"), false);
+                break;
+            default:
+                oled_write_P(PSTR("???\n"), false);
         }
-#endif
+    } else {
+        // Right OLED - Simple Corne text
+        oled_write_P(PSTR("Corne\nKeyboard"), false);
     }
     
-    oled_render(); // Ensure rendering is completed
     return false;
 }
 #endif
