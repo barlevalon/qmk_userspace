@@ -195,6 +195,9 @@ static void render_corne_logo(void) {
 
 // Main OLED task function
 bool oled_task_user(void) {
+    // Clear the display at the start to ensure clean rendering
+    oled_clear();
+    
     if (is_keyboard_master()) {
         // Left OLED - Status display
         render_layer_state();
@@ -223,6 +226,7 @@ bool oled_task_user(void) {
 #endif
     }
     
+    oled_render(); // Ensure rendering is completed
     return false;
 }
 #endif

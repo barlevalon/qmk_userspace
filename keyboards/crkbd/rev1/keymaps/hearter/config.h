@@ -28,6 +28,9 @@
 #ifdef OLED_ENABLE
 #    define OLED_DISPLAY_128X64
 #    define OLED_TIMEOUT 120000
+#    define OLED_FONT_H "keyboards/crkbd/lib/glcdfont.c"
+#    define OLED_BRIGHTNESS 128
+#    define OLED_TRANSPORT_ENABLE
 #endif
 
 /* Improved key press behavior */

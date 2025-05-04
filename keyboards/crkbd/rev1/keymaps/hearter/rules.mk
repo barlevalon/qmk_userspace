@@ -8,8 +8,8 @@ OLED_DRIVER = ssd1306
 # Enable WPM counter (typing speed)
 WPM_ENABLE = yes
 
-# Enable oneshot keys for modifier display
-ONESHOT_ENABLE = yes
+# We've disabled oneshot keys in config.h
+ONESHOT_ENABLE = no
 
 # RGB configuration (adjust as needed for your setup)
 RGBLIGHT_ENABLE = yes
