@@ -198,7 +198,7 @@ bool oled_task_user(void) {
     if (is_keyboard_master()) {
         // Left OLED - Status display
         render_layer_state();
-        render_mod_status(get_mods()|get_oneshot_mods());
+        render_mod_status(get_mods());
         led_t led_state = host_keyboard_led_state();
         render_caps_lock(led_state.caps_lock);
         render_wpm();
