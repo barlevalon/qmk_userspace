@@ -8,6 +8,9 @@ OLED_DRIVER = ssd1306
 # Enable WPM counter (typing speed)
 WPM_ENABLE = yes
 
+# Enable oneshot keys for modifier display
+ONESHOT_ENABLE = yes
+
 # RGB configuration (adjust as needed for your setup)
 RGBLIGHT_ENABLE = yes
 RGB_MATRIX_ENABLE = no
