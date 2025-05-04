@@ -238,7 +238,9 @@ wait_for_keyboard() {
     print_message "$YELLOW" "Put it in bootloader mode by double-tapping the reset button."
     print_message "$BLUE" "Waiting for device to appear at $MOUNT_POINT..."
     
-    while (( attempt < max_attempts )); do
+    local keep_trying=true
+    
+    while $keep_trying; do
         if [[ -d "$MOUNT_POINT" ]]; then
             print_message "$GREEN" "$side half of the keyboard detected at $MOUNT_POINT"
             
@@ -247,37 +249,102 @@ wait_for_keyboard() {
                 print_message "$GREEN" "Bootloader confirmed - ready to flash!"
                 return 0
             else
+                # Ask user what to do
                 print_message "$YELLOW" "Found $MOUNT_POINT but it doesn't appear to be in bootloader mode."
-                print_message "$YELLOW" "If this is incorrect, you can proceed anyway in 5 seconds."
-                sleep 5
+                print_message "$BLUE" "Options:"
+                print_message "$BLUE" "  [r] - Retry detection"
+                print_message "$BLUE" "  [p] - Proceed anyway (might not work)"
+                print_message "$BLUE" "  [s] - Skip flashing this half (not recommended)"
+                print_message "$BLUE" "  [q] - Quit"
+                read -p "What would you like to do? [r/p/s/q]: " choice
                 
-                # Check again in case it wasn't fully mounted yet
-                if [[ -f "$MOUNT_POINT/INFO_UF2.TXT" ]]; then
-                    print_message "$GREEN" "Bootloader confirmed - ready to flash!"
-                    return 0
-                else
-                    # Still proceed anyway
-                    print_message "$YELLOW" "Proceeding without bootloader confirmation. This might not work."
-                    return 0
-                fi
+                case "$choice" in
+                    r|R) 
+                        print_message "$BLUE" "Retrying..."
+                        # Just loop again
+                        ;;
+                    p|P)
+                        print_message "$YELLOW" "Proceeding without bootloader confirmation. This might not work."
+                        return 0
+                        ;;
+                    s|S)
+                        print_message "$YELLOW" "Skipping $side half. Your keyboard may not work correctly."
+                        return 0
+                        ;;
+                    q|Q)
+                        print_message "$RED" "Quitting at user request."
+                        exit 1
+                        ;;
+                    *)
+                        print_message "$YELLOW" "Invalid choice. Retrying..."
+                        ;;
+                esac
+                
+                # Reset attempt counter when user interacts
+                attempt=0
+            fi
+        else
+            # Show a message every 10 seconds or allow user to interact
+            if (( attempt % 10 == 0 && attempt > 0 )); then
+                print_message "$BLUE" "Still waiting for keyboard... (${attempt}s)"
+                print_message "$YELLOW" "Remember to put it in bootloader mode by double-tapping the reset button."
+                print_message "$BLUE" "Options:"
+                print_message "$BLUE" "  [c] - Continue waiting"
+                print_message "$BLUE" "  [s] - Skip flashing this half (not recommended)"
+                print_message "$BLUE" "  [q] - Quit"
+                read -t 5 -p "What would you like to do? [c/s/q]: " choice || { choice="c"; echo ""; }
+                
+                case "$choice" in
+                    c|C|"") 
+                        print_message "$BLUE" "Continuing to wait..."
+                        ;;
+                    s|S)
+                        print_message "$YELLOW" "Skipping $side half. Your keyboard may not work correctly."
+                        return 0
+                        ;;
+                    q|Q)
+                        print_message "$RED" "Quitting at user request."
+                        exit 1
+                        ;;
+                    *)
+                        print_message "$YELLOW" "Invalid choice. Continuing to wait..."
+                        ;;
+                esac
+            fi
+            
+            sleep 1
+            (( attempt++ ))
+            
+            # Check for timeout
+            if (( attempt >= max_attempts )); then
+                print_message "$RED" "Exceeded maximum wait time (${max_attempts}s)."
+                print_message "$BLUE" "Options:"
+                print_message "$BLUE" "  [r] - Retry detection"
+                print_message "$BLUE" "  [s] - Skip flashing this half (not recommended)"
+                print_message "$BLUE" "  [q] - Quit"
+                read -p "What would you like to do? [r/s/q]: " choice
+                
+                case "$choice" in
+                    r|R) 
+                        print_message "$BLUE" "Retrying..."
+                        attempt=0
+                        ;;
+                    s|S)
+                        print_message "$YELLOW" "Skipping $side half. Your keyboard may not work correctly."
+                        return 0
+                        ;;
+                    q|Q)
+                        print_message "$RED" "Quitting at user request."
+                        exit 1
+                        ;;
+                    *)
+                        print_message "$YELLOW" "Invalid choice. Retrying..."
+                        attempt=0
+                        ;;
+                esac
             fi
         fi
-        
-        # Show a message every 10 seconds
-        if (( attempt % 10 == 0 && attempt > 0 )); then
-            print_message "$BLUE" "Still waiting for keyboard... (${attempt}s)"
-            print_message "$YELLOW" "Remember to put it in bootloader mode by double-tapping the reset button."
-        fi
-        
-        sleep 1
-        (( attempt++ ))
     done
-    
-    # If we get here, we timed out
-    print_message "$RED" "ERROR: Timed out waiting for keyboard to enter bootloader mode."
-    print_message "$YELLOW" "Please try again, ensuring you correctly put the keyboard in bootloader mode."
-    print_message "$YELLOW" "Tips: Double-tap reset button quickly or use QK_BOOT keycode if available."
-    exit 1
 }
 
 # Function to check if avrdude is installed
@@ -336,23 +403,60 @@ flash_firmware() {
             sleep 1
         done
         
-        # Detect the serial port for the keyboard
+        # Interactive port detection
         print_message "$BLUE" "Looking for keyboard in bootloader mode..."
         local port=""
-        for p in /dev/tty.usbmodem* /dev/tty.usbserial* /dev/cu.usbmodem*; do
-            if [[ -e "$p" ]]; then
-                port="$p"
+        local keep_trying=true
+        
+        while $keep_trying; do
+            # Try to detect the port
+            for p in /dev/tty.usbmodem* /dev/tty.usbserial* /dev/cu.usbmodem*; do
+                if [[ -e "$p" ]]; then
+                    port="$p"
+                    break
+                fi
+            done
+            
+            if [[ -n "$port" ]]; then
+                # Found a port
+                print_message "$GREEN" "Found keyboard at $port"
                 break
+            else
+                # No port found, ask user what to do
+                print_message "$YELLOW" "No keyboard found in bootloader mode."
+                print_message "$YELLOW" "Make sure the $side half is connected and in bootloader mode."
+                print_message "$YELLOW" "Please press the reset button to put the keyboard in bootloader mode."
+                print_message "$BLUE" "Options:"
+                print_message "$BLUE" "  [r] - Retry detecting the keyboard"
+                print_message "$BLUE" "  [s] - Skip flashing this half (not recommended)"
+                print_message "$BLUE" "  [m] - Manually flash with another tool"
+                print_message "$BLUE" "  [q] - Quit"
+                read -p "What would you like to do? [r/s/m/q]: " choice
+                
+                case "$choice" in
+                    r|R) 
+                        print_message "$BLUE" "Retrying..."
+                        ;;
+                    s|S)
+                        print_message "$YELLOW" "Skipping $side half. Your keyboard may not work correctly."
+                        return 0
+                        ;;
+                    m|M)
+                        print_message "$YELLOW" "You can manually flash with QMK Toolbox using: $file"
+                        print_message "$YELLOW" "Or use avrdude directly with: avrdude -p atmega32u4 -c avr109 -P /path/to/port -U flash:w:$file:i"
+                        read -p "Press Enter once you've manually flashed the firmware..."
+                        return 0
+                        ;;
+                    q|Q)
+                        print_message "$RED" "Quitting at user request."
+                        exit 1
+                        ;;
+                    *)
+                        print_message "$YELLOW" "Invalid choice. Retrying..."
+                        ;;
+                esac
             fi
         done
-        
-        if [[ -z "$port" ]]; then
-            print_message "$RED" "No keyboard found in bootloader mode."
-            print_message "$YELLOW" "Make sure the keyboard is connected and in bootloader mode."
-            print_message "$YELLOW" "You can manually flash with QMK Toolbox using: $file"
-            read -p "Press Enter once you've manually flashed the firmware..."
-            return 1
-        fi
         
         print_message "$GREEN" "Found keyboard at $port"
         print_message "$BLUE" "Flashing with avrdude..."
