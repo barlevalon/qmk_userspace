@@ -83,9 +83,6 @@ uint32_t anim_timer = 0;
 uint8_t current_frame = 0;
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    if (is_keyboard_master()) {
-        return OLED_ROTATION_270;
-    }
     return rotation;
 }
 
