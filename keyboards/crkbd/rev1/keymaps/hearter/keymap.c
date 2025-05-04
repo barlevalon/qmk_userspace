@@ -78,12 +78,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 SEND_STRING(SS_LALT("t") SS_DELAY(200) "`t");
             }
             break;
-            
+
         case RGB_TOG_LAYER:
             if (record->event.pressed) {
                 // Toggle RGB on/off with state tracking
                 rgb_enabled = !rgb_enabled;
-                
+
                 if (rgb_enabled) {
                     // If enabling RGB, turn it on and set color for current layer
                     rgblight_enable_noeeprom();
@@ -103,7 +103,7 @@ void keyboard_post_init_user(void) {
 #ifdef RGBLIGHT_ENABLE
     // Initialize RGB state
     rgb_enabled = true;
-    
+
     // Enable RGB and set initial color for base layer
     rgblight_enable();
     rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
@@ -122,7 +122,7 @@ void bootmagic_lite_reset_handler(void) {
 #ifdef RGBLIGHT_ENABLE
     // Flash all LEDs red as bootloader indication
     rgblight_enable_noeeprom();
-    
+
     // Several bright flashes to make it very obvious
     for (int i = 0; i < 5; i++) {
         rgblight_setrgb(RGB_RED);
@@ -130,7 +130,7 @@ void bootmagic_lite_reset_handler(void) {
         rgblight_setrgb(RGB_OFF);
         wait_ms(50);
     }
-    
+
     // Solid red for a moment before bootloader
     rgblight_setrgb(RGB_RED);
     wait_ms(100);
@@ -189,7 +189,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 bool shutdown_user(bool jump_to_bootloader) {
 #ifdef RGBLIGHT_ENABLE
     rgblight_enable_noeeprom();
-    
+
     // Multiple flashes for visibility
     for (int i = 0; i < 3; i++) {
         rgblight_setrgb(RGB_RED);
@@ -197,12 +197,12 @@ bool shutdown_user(bool jump_to_bootloader) {
         rgblight_setrgb(RGB_OFF);
         wait_ms(50);
     }
-    
+
     // Final red for a moment
     rgblight_setrgb(RGB_RED);
     wait_ms(100);
 #endif
-    
+
     return false;
 }
 
@@ -211,7 +211,7 @@ bool shutdown_user(bool jump_to_bootloader) {
 void render_layer_state(void) {
     oled_write_P(PSTR("LAYER"), false);
     oled_write_P(PSTR("\n"), false);
-    
+
     switch (get_highest_layer(layer_state)) {
         case LAYER_BASE:
             oled_write_P(PSTR(" BASE "), false);
@@ -257,7 +257,7 @@ void render_caps_lock(bool caps_on) {
 void render_keylogger(void) {
     oled_write_P(PSTR("\nLAST"), false);
     oled_write_P(PSTR("\n "), false);
-    
+
     // This would need a key logger implementation
     // For now just display a placeholder
     oled_write_P(PSTR("KEY"), false);
@@ -267,7 +267,7 @@ void render_keylogger(void) {
 void render_wpm(void) {
 #ifdef WPM_ENABLE
     oled_write_P(PSTR("\nWPM\n "), false);
-    
+
     uint8_t n = get_current_wpm();
     char wpm_str[4];
     wpm_str[3] = '\0';
@@ -275,7 +275,7 @@ void render_wpm(void) {
     wpm_str[1] = '0' + (n /= 10) % 10;
     wpm_str[0] = '0' + n / 10;
     oled_write(wpm_str, false);
-    
+
 #else
     oled_write_P(PSTR("\nWPM\n ---"), false);
 #endif
@@ -286,14 +286,14 @@ void render_wpm(void) {
 bool oled_task_user(void) {
     // Clear the display
     oled_clear();
-    
+
     if (is_keyboard_master()) {
         // Left OLED - Show centered layer name and mods
-        
+
         // Layer name - centered
         uint8_t layer = get_highest_layer(layer_state);
         uint8_t layer_pos;
-        
+
         // First determine the position for proper centering
         switch (layer) {
             case LAYER_MEDIA:
@@ -306,7 +306,7 @@ bool oled_task_user(void) {
                 layer_pos = 8; // Default for 4-char layer names
                 break;
         }
-        
+
         // Now position cursor and display the text
         oled_set_cursor(layer_pos, 0);
         switch (layer) {
@@ -331,28 +331,30 @@ bool oled_task_user(void) {
             default:
                 oled_write_P(PSTR("???"), false);
         }
-        
+
         // Show modifier status - centered
         uint8_t mod_state = get_mods();
-        
+
         char mods[5] = "    ";
         if (mod_state & MOD_MASK_SHIFT) mods[0] = 'S';
         if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
         if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
         if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
-        
+
         oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
         // Right OLED - Display "HEARTER" text
-        
+
         // Place HEARTER centered on line 2
         // The OLED is 21 characters wide (128 pixels / 6 pixels per char)
         // "HEARTER" is 7 characters, so start at position (21-7)/2 = 7
         oled_set_cursor(7, 1);
         oled_write_P(PSTR("HEARTER"), false);
+        oled_set_cursor(8, 2);
+        oled_write_P(PSTR("crkbd"), false)
     }
-    
+
     return false;
 }
 #endif
