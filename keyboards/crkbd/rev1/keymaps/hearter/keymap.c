@@ -75,6 +75,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     return true;
 }
 
+// Keyboard initialization
+void keyboard_post_init_user(void) {
+#ifdef RGBLIGHT_ENABLE
+    // Enable RGB and set initial color for base layer
+    rgblight_enable();
+    rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
+    set_rgb_for_layer(LAYER_BASE);
+#endif
+}
+
 #ifdef OLED_ENABLE
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
@@ -99,6 +109,52 @@ void bootmagic_lite_reset_handler(void) {
     rgblight_setrgb(RGB_RED);
     wait_ms(100);
 #endif
+}
+
+// Define RGB colors for each layer
+void set_rgb_for_layer(uint8_t layer) {
+#ifdef RGBLIGHT_ENABLE
+    switch (layer) {
+        case LAYER_BASE:
+            // Cool blue/violet for base layer
+            rgblight_sethsv_noeeprom(170, 255, 255); // Blue-violet
+            break;
+        case LAYER_NUM:
+            // Teal/Cyan for number layer
+            rgblight_sethsv_noeeprom(128, 255, 255); // Teal
+            break;
+        case LAYER_SYM:
+            // Green for symbol layer
+            rgblight_sethsv_noeeprom(85, 255, 255);  // Green
+            break;
+        case LAYER_NAV:
+            // Orange for navigation layer
+            rgblight_sethsv_noeeprom(28, 255, 255);  // Orange
+            break;
+        case LAYER_MEDIA:
+            // Yellow for media layer
+            rgblight_sethsv_noeeprom(43, 255, 255);  // Yellow
+            break;
+        case LAYER_FN:
+            // Purple for function layer
+            rgblight_sethsv_noeeprom(213, 255, 255); // Purple
+            break;
+        default:
+            // Magenta for unknown layers
+            rgblight_sethsv_noeeprom(234, 255, 255); // Magenta
+            break;
+    }
+#endif
+}
+
+// Layer state change callback
+layer_state_t layer_state_set_user(layer_state_t state) {
+#ifdef RGBLIGHT_ENABLE
+    // Enable RGB and set color based on active layer
+    rgblight_enable_noeeprom();
+    set_rgb_for_layer(get_highest_layer(state));
+#endif
+    return state;
 }
 
 bool shutdown_user(bool jump_to_bootloader) {
