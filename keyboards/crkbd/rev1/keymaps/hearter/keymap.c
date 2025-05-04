@@ -67,6 +67,9 @@ enum custom_keycodes {
 // Forward declaration for RGB layer function
 void set_rgb_for_layer(uint8_t layer);
 
+// Global state to track if RGB should be enabled
+bool rgb_enabled = true;
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch(keycode) {
         case TMUX:
@@ -78,14 +81,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             
         case RGB_TOG_LAYER:
             if (record->event.pressed) {
-                // Toggle RGB on/off
-                if (rgblight_is_enabled()) {
-                    // If RGB is on, turn it off
-                    rgblight_disable_noeeprom();
-                } else {
-                    // If RGB is off, turn it on and set color for current layer
+                // Toggle RGB on/off with state tracking
+                rgb_enabled = !rgb_enabled;
+                
+                if (rgb_enabled) {
+                    // If enabling RGB, turn it on and set color for current layer
                     rgblight_enable_noeeprom();
                     set_rgb_for_layer(get_highest_layer(layer_state));
+                } else {
+                    // If disabling RGB, turn it off
+                    rgblight_disable_noeeprom();
                 }
             }
             return false; // Skip all further processing of this key
@@ -96,6 +101,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 // Keyboard initialization
 void keyboard_post_init_user(void) {
 #ifdef RGBLIGHT_ENABLE
+    // Initialize RGB state
+    rgb_enabled = true;
+    
     // Enable RGB and set initial color for base layer
     rgblight_enable();
     rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
@@ -168,9 +176,12 @@ void set_rgb_for_layer(uint8_t layer) {
 // Layer state change callback
 layer_state_t layer_state_set_user(layer_state_t state) {
 #ifdef RGBLIGHT_ENABLE
-    // Enable RGB and set color based on active layer
-    rgblight_enable_noeeprom();
-    set_rgb_for_layer(get_highest_layer(state));
+    // Only update RGB if it should be enabled
+    if (rgb_enabled) {
+        // Enable RGB and set color based on active layer
+        rgblight_enable_noeeprom();
+        set_rgb_for_layer(get_highest_layer(state));
+    }
 #endif
     return state;
 }
