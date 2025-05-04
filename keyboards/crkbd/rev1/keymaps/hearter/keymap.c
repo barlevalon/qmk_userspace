@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
+#include <string.h>  // For strlen
 
 enum corne_keymap_layers {
     LAYER_BASE = 0,
@@ -183,36 +184,74 @@ void render_wpm(void) {
 }
 
 
+// Basic function to display text in the center of the OLED display
+void oled_write_centered(const char *text) {
+    uint8_t len = strlen(text);
+    // OLED_DISPLAY_WIDTH = 128 pixels / 6 pixels per character = 21 characters
+    // 21 - len / 2 = center position
+    uint8_t pos = (len < 21) ? (21 - len) / 2 : 0;
+    for (uint8_t i = 0; i < pos; i++) {
+        oled_write_char(' ', false);
+    }
+    oled_write(text, false);
+}
+
 // Main OLED task function
 bool oled_task_user(void) {
+    // Clear the display
+    oled_clear();
+    
     if (is_keyboard_master()) {
-        // Left OLED - Simple status display
-        oled_write_P(PSTR("Layer: "), false);
+        // Left OLED - Show large text for the active layer
+        oled_set_cursor(0, 1);  // Row 1 (0-indexed)
+        oled_write_centered("LAYER");
+        
+        oled_set_cursor(0, 3);  // Row 3 (0-indexed)
         switch (get_highest_layer(layer_state)) {
             case LAYER_BASE:
-                oled_write_P(PSTR("Base\n"), false);
+                oled_write_centered("BASE");
                 break;
             case LAYER_NUM:
-                oled_write_P(PSTR("Num\n"), false);
+                oled_write_centered("NUMBER");
                 break;
             case LAYER_SYM:
-                oled_write_P(PSTR("Sym\n"), false);
+                oled_write_centered("SYMBOL");
                 break;
             case LAYER_NAV:
-                oled_write_P(PSTR("Nav\n"), false);
+                oled_write_centered("NAVIGATION");
                 break;
             case LAYER_MEDIA:
-                oled_write_P(PSTR("Media\n"), false);
+                oled_write_centered("MEDIA");
                 break;
             case LAYER_FN:
-                oled_write_P(PSTR("Func\n"), false);
+                oled_write_centered("FUNCTION");
                 break;
             default:
-                oled_write_P(PSTR("???\n"), false);
+                oled_write_centered("UNKNOWN");
         }
+        
+        // Show modifier status
+        oled_set_cursor(0, 6);
+        uint8_t mod_state = get_mods();
+        oled_write_centered("MODS");
+        
+        oled_set_cursor(0, 7);
+        char mods[5] = "    ";
+        if (mod_state & MOD_MASK_SHIFT) mods[0] = 'S';
+        if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
+        if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
+        if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
+        oled_write_centered(mods);
     } else {
-        // Right OLED - Simple Corne text
-        oled_write_P(PSTR("Corne\nKeyboard"), false);
+        // Right OLED - Show keyboard info
+        oled_set_cursor(0, 1);
+        oled_write_centered("CORNE");
+        
+        oled_set_cursor(0, 3);
+        oled_write_centered("KEYBOARD");
+        
+        oled_set_cursor(0, 6);
+        oled_write_centered("SPLIT");
     }
     
     return false;

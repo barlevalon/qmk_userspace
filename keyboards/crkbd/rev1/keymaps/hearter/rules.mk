@@ -3,7 +3,7 @@ CAPS_WORD_ENABLE = yes
 
 # OLED configuration
 OLED_ENABLE = yes
-OLED_DRIVER = ssd1306
+# OLED driver is automatically set to SSD1306
 
 # Enable WPM counter (typing speed)
 WPM_ENABLE = yes
