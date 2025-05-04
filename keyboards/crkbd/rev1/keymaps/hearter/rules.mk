@@ -4,7 +4,7 @@ KEY_OVERRIDE_ENABLE = yes
 
 # OLED configuration
 OLED_ENABLE = yes
-OLED_DRIVER = SSD1306
+OLED_DRIVER = ssd1306
 
 # RGB configuration (adjust as needed for your setup)
 RGBLIGHT_ENABLE = yes
