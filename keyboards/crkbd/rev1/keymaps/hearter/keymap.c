@@ -229,31 +229,13 @@ bool oled_task_user(void) {
         if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
         oled_write(mods, false);
     } else {
-        // Right OLED - Show WPM counter
-#ifdef WPM_ENABLE
-        uint8_t wpm = get_current_wpm();
+        // Right OLED - Display "HEARTER" text
         
-        // Show WPM counter with direct numeric display
-        oled_set_cursor(0, 0);
-        oled_write_P(PSTR("WPM"), false);
-        
-        // Convert WPM to string with simple method
-        char wpm_str[4];
-        wpm_str[3] = '\0';
-        wpm_str[2] = '0' + (wpm % 10);
-        wpm_str[1] = '0' + ((wpm / 10) % 10);
-        wpm_str[0] = '0' + (wpm / 100);
-        
-        // Display the value
-        oled_set_cursor(0, 2);
-        oled_write(wpm_str, false);
-#else
-        // If WPM tracking is disabled
-        oled_set_cursor(0, 0);
-        oled_write_P(PSTR("WPM"), false);
-        oled_set_cursor(0, 2);
-        oled_write_P(PSTR("OFF"), false);
-#endif
+        // Place HEARTER centered on line 2
+        // The OLED is 21 characters wide (128 pixels / 6 pixels per char)
+        // "HEARTER" is 7 characters, so start at position (21-7)/2 = 7
+        oled_set_cursor(7, 2);
+        oled_write_P(PSTR("HEARTER"), false);
     }
     
     return false;
