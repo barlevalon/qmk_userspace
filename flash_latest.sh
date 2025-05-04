@@ -395,10 +395,10 @@ flash_firmware() {
         fi
         
         print_message "$YELLOW" "Put the $side half into bootloader mode by pressing the reset button."
-        print_message "$YELLOW" "You have 5 seconds to press the reset button..."
+        print_message "$YELLOW" "You have 10 seconds to get into bootloader mode..."
         
         # Display a countdown
-        for i in {5..1}; do
+        for i in {10..1}; do
             print_message "$BLUE" "$i seconds remaining..."
             sleep 1
         done
