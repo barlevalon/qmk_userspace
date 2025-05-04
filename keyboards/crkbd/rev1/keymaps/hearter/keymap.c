@@ -106,14 +106,17 @@ void bootmagic_lite_reset_handler(void) {
 #endif
 }
 
-// Instead of redefining reset_keyboard, use this callback that QMK will call before reset
-void shutdown_user(void) {
+// Use the QMK shutdown_user callback with correct signature
+bool shutdown_user(bool jump_to_bootloader) {
 #ifdef RGBLIGHT_ENABLE
     // Final red flash before reset
     rgblight_enable_noeeprom();
     rgblight_setrgb(RGB_RED);
     wait_ms(250);
 #endif
+    
+    // Return false to let QMK handle the rest of the shutdown process
+    return false;
 }
 
 // Write a pixelated bar graph that fills from bottom to top
