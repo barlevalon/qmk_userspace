@@ -209,10 +209,6 @@ bool oled_task_user(void) {
         // Show WPM-based animation if WPM tracking is enabled
 #ifdef WPM_ENABLE
         // Update animation frame based on WPM
-        void animate_luna(void) {
-            // Add simple animation here if desired
-        }
-        
         if (timer_elapsed32(anim_timer) > ANIM_FRAME_DURATION) {
             anim_timer = timer_read32();
             current_frame = (current_frame + 1) % 6;
