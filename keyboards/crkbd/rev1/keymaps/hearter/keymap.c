@@ -31,8 +31,8 @@ enum corne_keymap_layers {
 #define SYM_ENT LT(LAYER_SYM, KC_ENT)
 #define NAV_SPC LT(LAYER_NAV, KC_SPC)
 #define MED_ESC LT(LAYER_MEDIA, KC_ESC)
-#define FN_Z LT(LAYER_FN, KC_Z)
-#define FN_SLSH LT(LAYER_FN, KC_SLSH)
+#define FN_TAB LT(LAYER_FN, KC_TAB)
+#define FN_DEL LT(LAYER_FN, KC_DEL)
 
 #define ONE_PASS G(KC_BSLS)
 #define TABS LCAG(KC_T)
@@ -265,9 +265,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        KC_CAPS, HOME_A,  HOME_S,  HOME_D,  HOME_F,  KC_G,       KC_H,    HOME_J,  HOME_K,  HOME_L,  HOME_QUO, RAYC,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-       ONE_PASS, FN_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M,   KC_COMM, KC_DOT,  FN_SLSH, LEADER,
+       ONE_PASS, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M,   KC_COMM, KC_DOT,  KC_SLSH, LEADER,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  MED_ESC, NAV_SPC, KC_TAB,     SYM_ENT, NUM_BSPC, KC_DEL
+                                  MED_ESC, NAV_SPC, FN_TAB,     SYM_ENT, NUM_BSPC, FN_DEL
   //                            ╰───────────────────────────╯ ╰──────────────────────────────╯
   ),
 
