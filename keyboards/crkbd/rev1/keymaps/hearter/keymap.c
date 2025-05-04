@@ -63,6 +63,9 @@ enum custom_keycodes {
     TMUX = SAFE_RANGE,
 };
 
+// Forward declaration for RGB layer function
+void set_rgb_for_layer(uint8_t layer);
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch(keycode) {
         case TMUX:
