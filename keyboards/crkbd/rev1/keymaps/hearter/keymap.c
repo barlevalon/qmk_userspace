@@ -154,12 +154,12 @@ void set_rgb_for_layer(uint8_t layer) {
             rgblight_sethsv_noeeprom(85, 255, 255);  // Green
             break;
         case LAYER_NAV:
-            // Orange for navigation layer
-            rgblight_sethsv_noeeprom(28, 255, 255);  // Orange
+            // Red-orange for navigation layer
+            rgblight_sethsv_noeeprom(10, 255, 255);  // Red-orange
             break;
         case LAYER_MEDIA:
-            // Yellow for media layer
-            rgblight_sethsv_noeeprom(43, 255, 255);  // Yellow
+            // Golden yellow for media layer
+            rgblight_sethsv_noeeprom(60, 255, 255);  // Golden yellow
             break;
         case LAYER_FN:
             // Purple for function layer
