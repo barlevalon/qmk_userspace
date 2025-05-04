@@ -17,8 +17,23 @@ MOUNT_POINT="/Volumes/RPI-RP2"
 # GitHub workflow artifact name
 FIRMWARE_NAME="Firmware"
 
-# Your specific keyboard firmware filename
-FIRMWARE_FILE="bastardkb_charybdis_3x6__hearter.uf2"
+# Keyboard selection
+KEYBOARD=${1:-"charybdis"} # Default to Charybdis if no argument provided
+
+# Set firmware file based on selected keyboard
+case "$KEYBOARD" in
+  "charybdis"|"ch")
+    FIRMWARE_FILE="bastardkb_charybdis_3x6__hearter.uf2"
+    ;;
+  "corne"|"crkbd"|"co")
+    FIRMWARE_FILE="crkbd_rev1__hearter.uf2"
+    ;;
+  *)
+    echo "Unknown keyboard: $KEYBOARD"
+    echo "Available options: charybdis (ch), corne (co/crkbd)"
+    exit 1
+    ;;
+esac
 
 # 1Password item for GitHub token (optional)
 OP_GITHUB_TOKEN_PATH="op://Private/github/token"
@@ -350,7 +365,16 @@ cleanup() {
 
 # Main function
 main() {
-    print_message "$BLUE" "Starting keyboard firmware flashing process..."
+    # Skip the first argument if it's a keyboard name
+    local options=()
+    if [[ "$1" == "charybdis" || "$1" == "ch" || "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
+        shift # Skip the keyboard argument since we've already processed it
+    fi
+    
+    # Remaining arguments are options
+    options=("$@")
+    
+    print_message "$BLUE" "Starting keyboard firmware flashing process for $KEYBOARD..."
     
     # Check dependencies
     check_gh_cli
@@ -360,7 +384,7 @@ main() {
     authenticate
     
     # Watch the workflow run if needed
-    if [[ "$1" != "--latest-successful" ]]; then
+    if [[ "${options[0]}" != "--latest-successful" ]]; then
         if ! watch_workflow; then
             print_message "$RED" "Exiting due to workflow failure."
             exit 1
@@ -385,7 +409,7 @@ main() {
     TMP_DIR=""
     
     # Pass the run_id if we're using latest successful
-    if [[ "$1" == "--latest-successful" ]]; then
+    if [[ "${options[0]}" == "--latest-successful" ]]; then
         get_firmware "$run_id"
     else
         get_firmware
@@ -433,7 +457,11 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo -e "${BLUE}Keyboard Firmware Flasher${NC}"
     echo -e "A tool to download and flash firmware for QMK split keyboards"
     echo ""
-    echo -e "${YELLOW}Usage:${NC} $0 [options]"
+    echo -e "${YELLOW}Usage:${NC} $0 [keyboard] [options]"
+    echo ""
+    echo -e "${YELLOW}Keyboards:${NC}"
+    echo "  charybdis, ch         Flash Charybdis 3x6 keyboard (default)"
+    echo "  corne, crkbd, co      Flash Corne v3 keyboard"
     echo ""
     echo -e "${YELLOW}Options:${NC}"
     echo "  --latest-successful   Use the latest successful build regardless of current workflow status"
@@ -460,6 +488,23 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo ""
     exit 0
 fi
+
+# Process keyboard selection first if present
+if [[ "$1" == "charybdis" || "$1" == "ch" || "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
+    KEYBOARD="$1"
+    shift
+fi
+
+# Override keyboard if it's specified in the first argument but not a valid option
+# This ensures incorrect keyboard names show a helpful error
+case "$KEYBOARD" in
+  "charybdis"|"ch")
+    KEYBOARD="charybdis"
+    ;;
+  "corne"|"crkbd"|"co")
+    KEYBOARD="corne"
+    ;;
+esac
 
 # Disable colors if requested
 if [[ "$1" == "--no-color" || "$2" == "--no-color" ]]; then
