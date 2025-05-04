@@ -196,7 +196,7 @@ get_firmware() {
     local firmware_path
     firmware_path=$(find "$tmp_dir" -name "$FIRMWARE_FILE" | head -1)
     
-    # If not found, try to find any .uf2 file
+    # If not found, try to find any file with the right extension
     if [[ -z "$firmware_path" ]]; then
         firmware_path=$(find "$tmp_dir" -type f -name "*${FIRMWARE_EXTENSION}" | head -1)
         if [[ -n "$firmware_path" ]]; then
@@ -208,7 +208,7 @@ get_firmware() {
             find "$tmp_dir" -type f | while read -r file; do
                 echo "  - $(basename "$file")"
             done
-            print_message "$YELLOW" "Check your workflow configuration to ensure it's producing a .uf2 file."
+            print_message "$YELLOW" "Check your workflow configuration to ensure it's producing the correct firmware file."
             rm -rf "$tmp_dir"
             exit 1
         fi
@@ -228,7 +228,7 @@ get_firmware() {
 # Function to wait for the keyboard to be connected
 wait_for_keyboard() {
     # Only used for RP2040-based keyboards using the copy method
-    # For QMK-based keyboards, the QMK CLI handles this
+    # For AVR-based keyboards, avrdude handles this
     
     local side=$1
     local attempt=0
@@ -599,22 +599,19 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     exit 0
 fi
 
-# Process keyboard selection first if present
+# Process keyboard selection if present
 if [[ "$1" == "charybdis" || "$1" == "ch" || "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
-    KEYBOARD="$1"
+    # Set the canonical keyboard name
+    case "$1" in
+      "charybdis"|"ch")
+        KEYBOARD="charybdis"
+        ;;
+      "corne"|"crkbd"|"co")
+        KEYBOARD="corne"
+        ;;
+    esac
     shift
 fi
-
-# Override keyboard if it's specified in the first argument but not a valid option
-# This ensures incorrect keyboard names show a helpful error
-case "$KEYBOARD" in
-  "charybdis"|"ch")
-    KEYBOARD="charybdis"
-    ;;
-  "corne"|"crkbd"|"co")
-    KEYBOARD="corne"
-    ;;
-esac
 
 # Disable colors if requested
 if [[ "$1" == "--no-color" || "$2" == "--no-color" ]]; then
