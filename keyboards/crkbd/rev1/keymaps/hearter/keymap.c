@@ -18,20 +18,6 @@
 #include <stdio.h>   // For sprintf
 #include <string.h>  // For strlen
 
-// Convert a uint8_t to a string
-char* get_u8_str(uint8_t value, char padding) {
-    static char str[4] = {0};
-    sprintf(str, "%3d", value);
-    if (padding != 0) {
-        for (uint8_t i = 0; i < 3; i++) {
-            if (str[i] == ' ') {
-                str[i] = padding;
-            }
-        }
-    }
-    return str;
-}
-
 enum corne_keymap_layers {
     LAYER_BASE = 0,
     LAYER_NUM,
@@ -282,7 +268,7 @@ bool oled_task_user(void) {
         // Show WPM counter
         oled_set_cursor(0, 5);
         oled_write_P(PSTR("WPM: "), false);
-        oled_write(get_u8_str(get_current_wpm(), ' '), false);
+        oled_write(get_u8_str(get_current_wpm(), '0'), false);
 #endif
     }
     
