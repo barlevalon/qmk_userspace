@@ -15,7 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
+#include <stdio.h>   // For sprintf
 #include <string.h>  // For strlen
+
+// Convert a uint8_t to a string
+char* get_u8_str(uint8_t value, char padding) {
+    static char str[4] = {0};
+    sprintf(str, "%3d", value);
+    if (padding != 0) {
+        for (uint8_t i = 0; i < 3; i++) {
+            if (str[i] == ' ') {
+                str[i] = padding;
+            }
+        }
+    }
+    return str;
+}
 
 enum corne_keymap_layers {
     LAYER_BASE = 0,
@@ -184,74 +199,91 @@ void render_wpm(void) {
 }
 
 
-// Basic function to display text in the center of the OLED display
-void oled_write_centered(const char *text) {
-    uint8_t len = strlen(text);
-    // OLED_DISPLAY_WIDTH = 128 pixels / 6 pixels per character = 21 characters
-    // 21 - len / 2 = center position
-    uint8_t pos = (len < 21) ? (21 - len) / 2 : 0;
-    for (uint8_t i = 0; i < pos; i++) {
-        oled_write_char(' ', false);
-    }
-    oled_write(text, false);
-}
-
 // Main OLED task function
 bool oled_task_user(void) {
     // Clear the display
     oled_clear();
     
     if (is_keyboard_master()) {
-        // Left OLED - Show large text for the active layer
-        oled_set_cursor(0, 1);  // Row 1 (0-indexed)
-        oled_write_centered("LAYER");
+        // Left OLED - Show current layer and mods
+        // Header
+        oled_set_cursor(0, 0);
+        oled_write_P(PSTR("LAYER:"), false);
         
-        oled_set_cursor(0, 3);  // Row 3 (0-indexed)
+        // Layer name - large and clear
+        oled_set_cursor(0, 2);
         switch (get_highest_layer(layer_state)) {
             case LAYER_BASE:
-                oled_write_centered("BASE");
+                oled_write_P(PSTR("BASE"), false);
                 break;
             case LAYER_NUM:
-                oled_write_centered("NUMBER");
+                oled_write_P(PSTR("NUM"), false);
                 break;
             case LAYER_SYM:
-                oled_write_centered("SYMBOL");
+                oled_write_P(PSTR("SYM"), false);
                 break;
             case LAYER_NAV:
-                oled_write_centered("NAVIGATION");
+                oled_write_P(PSTR("NAV"), false);
                 break;
             case LAYER_MEDIA:
-                oled_write_centered("MEDIA");
+                oled_write_P(PSTR("MEDIA"), false);
                 break;
             case LAYER_FN:
-                oled_write_centered("FUNCTION");
+                oled_write_P(PSTR("FN"), false);
                 break;
             default:
-                oled_write_centered("UNKNOWN");
+                oled_write_P(PSTR("???"), false);
         }
         
         // Show modifier status
-        oled_set_cursor(0, 6);
-        uint8_t mod_state = get_mods();
-        oled_write_centered("MODS");
+        oled_set_cursor(0, 4);
+        oled_write_P(PSTR("MODS:"), false);
         
-        oled_set_cursor(0, 7);
-        char mods[5] = "    ";
-        if (mod_state & MOD_MASK_SHIFT) mods[0] = 'S';
-        if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
-        if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
-        if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
-        oled_write_centered(mods);
+        // Display modifiers on a single line
+        oled_set_cursor(0, 5);
+        uint8_t mod_state = get_mods();
+        
+        // Show mod status with visible indicators
+        if (mod_state & MOD_MASK_SHIFT) {
+            oled_write_P(PSTR("SFT "), false);
+        } else {
+            oled_write_P(PSTR("    "), false);
+        }
+        
+        oled_set_cursor(0, 6);
+        if (mod_state & MOD_MASK_CTRL) {
+            oled_write_P(PSTR("CTL "), false);
+        } else {
+            oled_write_P(PSTR("    "), false);
+        }
+        
+        oled_set_cursor(4, 5);
+        if (mod_state & MOD_MASK_ALT) {
+            oled_write_P(PSTR("ALT "), false);
+        } else {
+            oled_write_P(PSTR("    "), false);
+        }
+        
+        oled_set_cursor(4, 6);
+        if (mod_state & MOD_MASK_GUI) {
+            oled_write_P(PSTR("GUI "), false);
+        } else {
+            oled_write_P(PSTR("    "), false);
+        }
     } else {
         // Right OLED - Show keyboard info
         oled_set_cursor(0, 1);
-        oled_write_centered("CORNE");
+        oled_write_P(PSTR("CORNE"), false);
         
         oled_set_cursor(0, 3);
-        oled_write_centered("KEYBOARD");
+        oled_write_P(PSTR("KEYBOARD"), false);
         
-        oled_set_cursor(0, 6);
-        oled_write_centered("SPLIT");
+#ifdef WPM_ENABLE
+        // Show WPM counter
+        oled_set_cursor(0, 5);
+        oled_write_P(PSTR("WPM: "), false);
+        oled_write(get_u8_str(get_current_wpm(), ' '), false);
+#endif
     }
     
     return false;
