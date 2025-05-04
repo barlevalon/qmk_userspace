@@ -1,6 +1,5 @@
 VIA_ENABLE = no
 CAPS_WORD_ENABLE = yes
-KEY_OVERRIDE_ENABLE = yes
 
 # OLED configuration
 OLED_ENABLE = yes

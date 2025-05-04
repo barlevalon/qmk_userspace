@@ -107,7 +107,7 @@ void oled_render_layer_state(void) {
     }
 }
 
-void oled_task_user(void) {
+bool oled_task_user(void) {
     if (is_keyboard_master()) {
         // Host Keyboard Layer Status
         oled_render_layer_state();
@@ -123,6 +123,7 @@ void oled_task_user(void) {
             0};
         oled_write_P(crkbd_logo, false);
     }
+    return false; // Continue with default oled task
 }
 #endif
 
