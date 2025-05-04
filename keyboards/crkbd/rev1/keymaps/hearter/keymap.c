@@ -106,16 +106,23 @@ void bootmagic_lite_reset_handler(void) {
 #endif
 }
 
-// Use the QMK shutdown_user callback with correct signature
 bool shutdown_user(bool jump_to_bootloader) {
 #ifdef RGBLIGHT_ENABLE
-    // Final red flash before reset
     rgblight_enable_noeeprom();
+    
+    // Multiple flashes for visibility
+    for (int i = 0; i < 3; i++) {
+        rgblight_setrgb(RGB_RED);
+        wait_ms(50);
+        rgblight_setrgb(RGB_OFF);
+        wait_ms(50);
+    }
+    
+    // Final red for a moment
     rgblight_setrgb(RGB_RED);
-    wait_ms(250);
+    wait_ms(100);
 #endif
     
-    // Return false to let QMK handle the rest of the shutdown process
     return false;
 }
 
