@@ -11,8 +11,8 @@ set -o pipefail
 # GitHub repository containing your QMK userspace
 REPO="barlevalon/qmk_userspace"
 
-# Keyboard mount point in bootloader mode 
-MOUNT_POINT="/Volumes/RPI-RP2"
+# Different keyboards use different bootloaders with different mount points
+# This will be set based on the keyboard type selected
 
 # GitHub workflow artifact name
 FIRMWARE_NAME="Firmware"
@@ -20,13 +20,20 @@ FIRMWARE_NAME="Firmware"
 # Keyboard selection
 KEYBOARD=${1:-"charybdis"} # Default to Charybdis if no argument provided
 
-# Set firmware file based on selected keyboard
+# Set firmware file and flashing method based on selected keyboard
 case "$KEYBOARD" in
   "charybdis"|"ch")
     FIRMWARE_FILE="bastardkb_charybdis_3x6__hearter.uf2"
+    FIRMWARE_EXTENSION=".uf2"
+    FLASH_METHOD="copy"
+    MOUNT_POINT="/Volumes/RPI-RP2"
     ;;
   "corne"|"crkbd"|"co")
-    FIRMWARE_FILE="crkbd_rev1__hearter.uf2"
+    FIRMWARE_FILE="crkbd_rev1_hearter.hex"
+    FIRMWARE_EXTENSION=".hex"
+    FLASH_METHOD="qmk"
+    KEYBOARD_NAME="crkbd/rev1"  # QMK keyboard name
+    KEYMAP_NAME="hearter"       # QMK keymap name
     ;;
   *)
     echo "Unknown keyboard: $KEYBOARD"
@@ -44,8 +51,7 @@ KEYBOARD_REBOOT_TIMEOUT=15
 # Delay between halves (seconds)
 DELAY_BETWEEN_HALVES=2
 
-# Expected file extension for the firmware
-FIRMWARE_EXTENSION=".uf2"
+# The firmware extension will be set by the keyboard selection
 
 # Minimum expected firmware file size (bytes)
 MIN_FIRMWARE_SIZE=10000
@@ -223,6 +229,9 @@ get_firmware() {
 
 # Function to wait for the keyboard to be connected
 wait_for_keyboard() {
+    # Only used for RP2040-based keyboards using the copy method
+    # For QMK-based keyboards, the QMK CLI handles this
+    
     local side=$1
     local attempt=0
     local max_attempts=180  # 3 minutes timeout
@@ -273,6 +282,16 @@ wait_for_keyboard() {
     exit 1
 }
 
+# Function to check if QMK CLI is installed
+check_qmk_cli() {
+    if ! command -v qmk &> /dev/null; then
+        print_message "$RED" "Error: QMK CLI is not installed."
+        print_message "$YELLOW" "Please install it with: pip install qmk"
+        return 1
+    fi
+    return 0
+}
+
 # Function to flash the firmware to the keyboard
 flash_firmware() {
     local file=$1
@@ -285,13 +304,49 @@ flash_firmware() {
     
     print_message "$BLUE" "Flashing $side half with $(basename "$file")"
     
-    # Copy the firmware file to the keyboard
-    if ! cp "$file" "$MOUNT_POINT/"; then
-        print_message "$RED" "Failed to copy firmware to $MOUNT_POINT"
+    # Different flashing method based on the keyboard type
+    if [[ "$FLASH_METHOD" == "copy" ]]; then
+        # RP2040-based boards like Charybdis use UF2 format and copy method
+        print_message "$YELLOW" "Please put the keyboard in bootloader mode (double press reset button)"
+        
+        # Wait for the keyboard to appear
+        wait_for_keyboard "$side"
+        
+        # Copy the firmware file to the keyboard
+        if ! cp "$file" "$MOUNT_POINT/"; then
+            print_message "$RED" "Failed to copy firmware to $MOUNT_POINT"
+            return 1
+        fi
+        
+        print_message "$GREEN" "Firmware copied to keyboard. Waiting for it to reboot..."
+    elif [[ "$FLASH_METHOD" == "qmk" ]]; then
+        # Check if QMK CLI is installed
+        if ! check_qmk_cli; then
+            print_message "$RED" "QMK CLI is required for flashing Corne keyboard."
+            print_message "$YELLOW" "You can manually flash the firmware with QMK Toolbox instead."
+            print_message "$YELLOW" "Firmware file is located at: $file"
+            read -p "Press Enter once you've manually flashed the firmware..."
+            return 0
+        fi
+        
+        print_message "$YELLOW" "Flashing with QMK CLI. Put the $side half into bootloader mode when prompted..."
+        print_message "$YELLOW" "Press the reset button on the keyboard when QMK asks you to."
+        
+        # Using QMK CLI to flash
+        if ! qmk flash -kb $KEYBOARD_NAME -km $KEYMAP_NAME -bl avrdude; then
+            print_message "$RED" "Failed to flash with QMK CLI."
+            print_message "$YELLOW" "You can try manually flashing with: qmk flash -kb $KEYBOARD_NAME -km $KEYMAP_NAME"
+            print_message "$YELLOW" "Or use QMK Toolbox to flash the firmware file: $file"
+            read -p "Press Enter once you've manually flashed the firmware..."
+            return 1
+        fi
+        
+        print_message "$GREEN" "Successfully flashed the $side half with QMK CLI."
+        return 0
+    else
+        print_message "$RED" "Unknown flashing method: $FLASH_METHOD"
         return 1
     fi
-    
-    print_message "$GREEN" "Firmware copied to keyboard. Waiting for it to reboot..."
     
     # Wait for the keyboard to disconnect
     local count=0
@@ -424,22 +479,50 @@ main() {
     print_message "$BLUE" "Starting the flashing process..."
     print_message "$YELLOW" "This script will help you flash both halves of your keyboard."
     
-    # Flash left half
-    wait_for_keyboard "LEFT"
-    if ! flash_firmware "$FIRMWARE_PATH" "LEFT"; then
-        print_message "$RED" "Failed to flash LEFT half."
-        cleanup "$TMP_DIR"
-        exit 1
-    fi
-    
-    print_message "$YELLOW" "Left half flashed successfully!"
-    print_message "$YELLOW" "Now prepare the RIGHT half of your keyboard."
-    sleep $DELAY_BETWEEN_HALVES
-    
-    # Flash right half
-    wait_for_keyboard "RIGHT"
-    if ! flash_firmware "$FIRMWARE_PATH" "RIGHT"; then
-        print_message "$RED" "Failed to flash RIGHT half."
+    # Different processes based on keyboard type
+    if [[ "$FLASH_METHOD" == "copy" ]]; then
+        # For RP2040-based keyboards like Charybdis
+        
+        # Flash left half
+        if ! flash_firmware "$FIRMWARE_PATH" "LEFT"; then
+            print_message "$RED" "Failed to flash LEFT half."
+            cleanup "$TMP_DIR"
+            exit 1
+        fi
+        
+        print_message "$YELLOW" "Left half flashed successfully!"
+        print_message "$YELLOW" "Now prepare the RIGHT half of your keyboard."
+        sleep $DELAY_BETWEEN_HALVES
+        
+        # Flash right half
+        if ! flash_firmware "$FIRMWARE_PATH" "RIGHT"; then
+            print_message "$RED" "Failed to flash RIGHT half."
+            cleanup "$TMP_DIR"
+            exit 1
+        fi
+    elif [[ "$FLASH_METHOD" == "qmk" ]]; then
+        # For AVR-based keyboards like Corne that use QMK CLI
+        
+        # Flash left half
+        print_message "$YELLOW" "We'll flash the LEFT half first."
+        if ! flash_firmware "$FIRMWARE_PATH" "LEFT"; then
+            print_message "$RED" "Failed to flash LEFT half."
+            cleanup "$TMP_DIR"
+            exit 1
+        fi
+        
+        print_message "$YELLOW" "Left half flashed successfully!"
+        print_message "$YELLOW" "Now we'll flash the RIGHT half."
+        sleep $DELAY_BETWEEN_HALVES
+        
+        # Flash right half
+        if ! flash_firmware "$FIRMWARE_PATH" "RIGHT"; then
+            print_message "$RED" "Failed to flash RIGHT half."
+            cleanup "$TMP_DIR"
+            exit 1
+        fi
+    else
+        print_message "$RED" "Unsupported flashing method: $FLASH_METHOD"
         cleanup "$TMP_DIR"
         exit 1
     fi
@@ -477,9 +560,12 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  1. Run this script after pushing changes to your keyboard firmware"
     echo "  2. The script will download the latest firmware build"
     echo "  3. Follow the prompts to enter bootloader mode for each half"
-    echo "  4. Put your keyboard in bootloader mode when prompted:"
-    echo "     - Press the reset button twice quickly, or"
-    echo "     - Use the bootloader key combination if available"
+    echo "  4. For Charybdis keyboards:"
+    echo "     - Put your keyboard in bootloader mode by pressing the reset button twice quickly"
+    echo "  5. For Corne keyboards:"
+    echo "     - The script will use QMK CLI to flash the firmware"
+    echo "     - You'll need to press the reset button when prompted by QMK"
+    echo "     - Make sure QMK CLI is installed: pip install qmk"
     echo ""
     echo -e "${YELLOW}Troubleshooting:${NC}"
     echo "  - If no firmware is found, check your GitHub workflow"
