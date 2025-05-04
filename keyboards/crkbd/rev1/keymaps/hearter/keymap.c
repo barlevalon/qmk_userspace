@@ -191,11 +191,28 @@ bool oled_task_user(void) {
     oled_clear();
     
     if (is_keyboard_master()) {
-        // Left OLED - Show current layer and mods
+        // Left OLED - Show centered layer name and mods
         
-        // Layer name - large and clear
-        oled_set_cursor(0, 0);
-        switch (get_highest_layer(layer_state)) {
+        // Layer name - centered
+        uint8_t layer = get_highest_layer(layer_state);
+        uint8_t layer_pos;
+        
+        // First determine the position for proper centering
+        switch (layer) {
+            case LAYER_MEDIA:
+                layer_pos = 7; // Adjust for longer name (5 chars)
+                break;
+            case LAYER_FN:
+                layer_pos = 9; // Adjust for shorter name (2 chars)
+                break;
+            default:
+                layer_pos = 8; // Default for 4-char layer names
+                break;
+        }
+        
+        // Now position cursor and display the text
+        oled_set_cursor(layer_pos, 0);
+        switch (layer) {
             case LAYER_BASE:
                 oled_write_P(PSTR("BASE"), false);
                 break;
@@ -218,8 +235,7 @@ bool oled_task_user(void) {
                 oled_write_P(PSTR("???"), false);
         }
         
-        // Show modifier status - single character indicators
-        oled_set_cursor(0, 2);
+        // Show modifier status - centered
         uint8_t mod_state = get_mods();
         
         char mods[5] = "    ";
@@ -227,6 +243,8 @@ bool oled_task_user(void) {
         if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
         if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
         if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
+        
+        oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
         // Right OLED - Display "HEARTER" text
