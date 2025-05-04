@@ -30,6 +30,12 @@
 #    define OLED_BRIGHTNESS 255  // Maximum brightness
 #endif
 
+/* WPM counter configuration */
+#ifdef WPM_ENABLE
+#    define WPM_SAMPLE_SECONDS 5  // More responsive WPM calculation
+#    define WPM_SAMPLE_PERIODS 10  // Faster sampling
+#endif
+
 /* Improved key press behavior */
 #define TAPPING_TERM 175
 #define PERMISSIVE_HOLD

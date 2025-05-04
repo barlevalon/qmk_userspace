@@ -229,14 +229,30 @@ bool oled_task_user(void) {
         if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
         oled_write(mods, false);
     } else {
-        // Right OLED - Show only WPM counter
+        // Right OLED - Show WPM counter
 #ifdef WPM_ENABLE
-        // Show WPM counter
+        uint8_t wpm = get_current_wpm();
+        
+        // Show WPM counter with direct numeric display
         oled_set_cursor(0, 0);
         oled_write_P(PSTR("WPM"), false);
         
+        // Convert WPM to string with simple method
+        char wpm_str[4];
+        wpm_str[3] = '\0';
+        wpm_str[2] = '0' + (wpm % 10);
+        wpm_str[1] = '0' + ((wpm / 10) % 10);
+        wpm_str[0] = '0' + (wpm / 100);
+        
+        // Display the value
         oled_set_cursor(0, 2);
-        oled_write(get_u8_str(get_current_wpm(), ' '), false);
+        oled_write(wpm_str, false);
+#else
+        // If WPM tracking is disabled
+        oled_set_cursor(0, 0);
+        oled_write_P(PSTR("WPM"), false);
+        oled_set_cursor(0, 2);
+        oled_write_P(PSTR("OFF"), false);
 #endif
     }
     
