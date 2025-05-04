@@ -158,8 +158,8 @@ void set_rgb_for_layer(uint8_t layer) {
             rgblight_sethsv_noeeprom(10, 255, 255);  // Red-orange
             break;
         case LAYER_MEDIA:
-            // Golden yellow for media layer
-            rgblight_sethsv_noeeprom(60, 255, 255);  // Golden yellow
+            // Bright yellow for media layer
+            rgblight_sethsv_noeeprom(43, 255, 255);  // Bright yellow
             break;
         case LAYER_FN:
             // Purple for function layer
@@ -352,7 +352,7 @@ bool oled_task_user(void) {
         oled_set_cursor(7, 1);
         oled_write_P(PSTR("HEARTER"), false);
         oled_set_cursor(8, 2);
-        oled_write_P(PSTR("crkbd"), false)
+        oled_write_P(PSTR("crkbd"), false);
     }
 
     return false;
