@@ -142,8 +142,8 @@ void set_rgb_for_layer(uint8_t layer) {
 #ifdef RGBLIGHT_ENABLE
     switch (layer) {
         case LAYER_BASE:
-            // Cool blue/violet for base layer
-            rgblight_sethsv_noeeprom(170, 255, 255); // Blue-violet
+            // More purple shade for base layer
+            rgblight_sethsv_noeeprom(190, 255, 255); // Purple-blue
             break;
         case LAYER_NUM:
             // Teal/Cyan for number layer
