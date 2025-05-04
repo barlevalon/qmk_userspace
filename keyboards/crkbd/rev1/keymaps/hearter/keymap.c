@@ -252,7 +252,7 @@ bool oled_task_user(void) {
         // Place HEARTER centered on line 2
         // The OLED is 21 characters wide (128 pixels / 6 pixels per char)
         // "HEARTER" is 7 characters, so start at position (21-7)/2 = 7
-        oled_set_cursor(7, 2);
+        oled_set_cursor(7, 1);
         oled_write_P(PSTR("HEARTER"), false);
     }
     
