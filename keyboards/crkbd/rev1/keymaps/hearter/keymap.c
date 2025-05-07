@@ -59,16 +59,50 @@ enum corne_keymap_layers {
 #define HOME_L LALT_T(KC_L)
 #define HOME_QUO RCTL_T(KC_QUOT)
 
+// User config structure to store in EEPROM
+typedef union {
+    uint32_t raw;
+    struct {
+        bool rgb_enabled :1;
+        // You can add more settings here if needed
+    };
+} user_config_t;
+
+user_config_t user_config;
+
 enum custom_keycodes {
     TMUX = SAFE_RANGE,
-    RGB_TOG_LAYER, // Toggle RGB and remember to restore layer color when turned back on
+    RGB_TOG_EE, // Custom RGB toggle with EEPROM persistence
 };
 
 // Forward declaration for RGB layer function
 void set_rgb_for_layer(uint8_t layer);
 
-// Global state to track if RGB should be enabled
-bool rgb_enabled = true;
+// Initialize user EEPROM with default values
+void eeconfig_init_user(void) {
+    // Initialize the user EEPROM with default values
+    user_config.raw = 0;
+    user_config.rgb_enabled = true; // RGB enabled by default
+    eeconfig_update_user(user_config.raw);
+}
+
+// Read the user config from EEPROM and apply settings
+void keyboard_post_init_user(void) {
+    // Read the user config from EEPROM
+    user_config.raw = eeconfig_read_user();
+
+#ifdef RGBLIGHT_ENABLE
+    // Apply the RGB enabled state from EEPROM
+    if (user_config.rgb_enabled) {
+        // Enable RGB and set initial color for base layer
+        rgblight_enable();
+        rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
+        set_rgb_for_layer(LAYER_BASE);
+    } else {
+        rgblight_disable();
+    }
+#endif
+}
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch(keycode) {
@@ -79,36 +113,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             }
             break;
 
-        case RGB_TOG_LAYER:
+        case RGB_TOG_EE:
             if (record->event.pressed) {
-                // Toggle RGB on/off with state tracking
-                rgb_enabled = !rgb_enabled;
-
-                if (rgb_enabled) {
-                    // If enabling RGB, turn it on and set color for current layer
-                    rgblight_enable_noeeprom();
+                // Toggle the RGB enabled state
+                user_config.rgb_enabled = !user_config.rgb_enabled;
+                
+                // Update EEPROM with the new setting
+                eeconfig_update_user(user_config.raw);
+                
+                // Actually toggle the RGB and update the layer color if enabled
+                if (user_config.rgb_enabled) {
+                    rgblight_enable();
                     set_rgb_for_layer(get_highest_layer(layer_state));
                 } else {
-                    // If disabling RGB, turn it off
-                    rgblight_disable_noeeprom();
+                    rgblight_disable();
                 }
             }
             return false; // Skip all further processing of this key
     }
     return true;
-}
-
-// Keyboard initialization
-void keyboard_post_init_user(void) {
-#ifdef RGBLIGHT_ENABLE
-    // Initialize RGB state
-    rgb_enabled = true;
-
-    // Enable RGB and set initial color for base layer
-    rgblight_enable();
-    rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
-    set_rgb_for_layer(LAYER_BASE);
-#endif
 }
 
 #ifdef OLED_ENABLE
@@ -176,8 +199,8 @@ void set_rgb_for_layer(uint8_t layer) {
 // Layer state change callback
 layer_state_t layer_state_set_user(layer_state_t state) {
 #ifdef RGBLIGHT_ENABLE
-    // Only update RGB if it should be enabled
-    if (rgb_enabled) {
+    // Only update RGB if it should be enabled (based on EEPROM setting)
+    if (user_config.rgb_enabled) {
         // Enable RGB and set color based on active layer
         rgblight_enable_noeeprom();
         set_rgb_for_layer(get_highest_layer(state));
@@ -427,7 +450,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX,    XXXXXXX, KC_F4,   KC_F5,   KC_F6,   KC_F11,   XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-       XXXXXXX, _______, RGB_TOG_LAYER, RGB_HUI, RGB_SAI, RGB_VAI, XXXXXXX, KC_F1, KC_F2, KC_F3, KC_F10, XXXXXXX,
+       XXXXXXX, _______, RGB_TOG_EE, RGB_HUI, RGB_SAI, RGB_VAI, XXXXXXX, KC_F1, KC_F2, KC_F3, KC_F10, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
                                   RGB_MOD, RGB_MOD, RGB_RMOD,   XXXXXXX, XXXXXXX, XXXXXXX
   //                            ╰───────────────────────────╯ ╰──────────────────────────────╯
