@@ -38,8 +38,10 @@
 #endif
 
 /* Improved key press behavior */
-#define TAPPING_TERM 175
+#define TAPPING_TERM 200  // Increased from 175ms to reduce accidental mod activation
 #define PERMISSIVE_HOLD
+#define IGNORE_MOD_TAP_INTERRUPT  // Prevents mod activation during fast typing
+#define TAPPING_FORCE_HOLD        // Prevents repeated mod activations when holding
 
 /* Tap dance configuration */
 #define TAPPING_TERM_TAP_DANCE 200   // Time window for tap dance (ms)
