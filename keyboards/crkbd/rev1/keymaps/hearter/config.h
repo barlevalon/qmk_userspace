@@ -18,7 +18,7 @@
 
 #ifdef VIA_ENABLE
 /* VIA configuration. */
-#    define DYNAMIC_KEYMAP_LAYER_COUNT 6
+#    define DYNAMIC_KEYMAP_LAYER_COUNT 7  // Include GAMING layer
 #endif // VIA_ENABLE
 
 /* Disable unused features. */
@@ -40,6 +40,9 @@
 /* Improved key press behavior */
 #define TAPPING_TERM 175
 #define PERMISSIVE_HOLD
+
+/* Tap dance configuration */
+#define TAPPING_TERM_TAP_DANCE 200   // Time window for tap dance (ms)
 
 /* Split keyboard specific */
 #define SPLIT_TRANSPORT_MIRROR

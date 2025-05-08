@@ -15,6 +15,9 @@ ONESHOT_ENABLE = no
 RGBLIGHT_ENABLE = yes
 RGB_MATRIX_ENABLE = no
 
+# Enable tap dance for gaming layer toggle
+TAP_DANCE_ENABLE = yes
+
 # No audio features for Corne
 AUDIO_ENABLE = no
 

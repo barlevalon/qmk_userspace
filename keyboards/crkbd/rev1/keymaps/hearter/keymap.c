@@ -25,6 +25,7 @@ enum corne_keymap_layers {
     LAYER_NAV,
     LAYER_MEDIA,
     LAYER_FN,
+    LAYER_GAMING,
 };
 
 #define NUM_BSPC LT(LAYER_NUM, KC_BSPC)
@@ -37,7 +38,7 @@ enum corne_keymap_layers {
 #define ONE_PASS G(KC_BSLS)
 #define TABS LCAG(KC_T)
 #define RAYC G(KC_SPC)
-#define LEADER HYPR(KC_SPACE)
+#define LEADER TD(TD_GAMING_TOGGLE) // Tap dance: single tap for HYPR(KC_SPACE), double tap to toggle gaming layer
 #define LCRLY S(KC_LBRC)
 #define RCRLY S(KC_RBRC)
 #define CLN S(KC_SCLN)
@@ -75,8 +76,54 @@ enum custom_keycodes {
     RGB_TOG_EE, // Custom RGB toggle with EEPROM persistence
 };
 
-// Forward declaration for RGB layer function
+// Tap Dance definitions
+enum {
+    TD_GAMING_TOGGLE, // Tap dance for gaming layer toggle
+    TD_TO_BASE,       // Tap dance to return to base layer
+};
+
+// Forward declarations
 void set_rgb_for_layer(uint8_t layer);
+
+// Tap dance functions
+void gaming_toggle_finished(qk_tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 2) {
+        // Double-tap or more: toggle the gaming layer
+        layer_invert(LAYER_GAMING);
+    } else {
+        // Single tap: perform the original key function (HYPR+Space)
+        if (state->pressed) {
+            register_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
+        } else {
+            register_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
+            tap_code(KC_SPACE);
+            unregister_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
+        }
+    }
+}
+
+void gaming_toggle_reset(qk_tap_dance_state_t *state, void *user_data) {
+    // If the key was just tapped and not held, do nothing here
+    // If it was held and then released, we already sent the key in the finished function
+    if (state->count == 1 && state->pressed) {
+        unregister_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
+    }
+}
+
+// Tap dance function to go back to base layer
+void to_base_finished(qk_tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 2) {
+        // Double-tap or more: go back to base layer
+        layer_clear(); // Clear all layers and go back to base
+    }
+    // Single tap: Do nothing (matches ZMK behavior)
+}
+
+// Tap Dance definitions
+qk_tap_dance_action_t tap_dance_actions[] = {
+    [TD_GAMING_TOGGLE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, gaming_toggle_finished, gaming_toggle_reset),
+    [TD_TO_BASE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, to_base_finished, NULL)
+};
 
 // Initialize user EEPROM with default values
 void eeconfig_init_user(void) {
@@ -117,10 +164,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             if (record->event.pressed) {
                 // Toggle the RGB enabled state
                 user_config.rgb_enabled = !user_config.rgb_enabled;
-                
+
                 // Update EEPROM with the new setting
                 eeconfig_update_user(user_config.raw);
-                
+
                 // Actually toggle the RGB and update the layer color if enabled
                 if (user_config.rgb_enabled) {
                     rgblight_enable();
@@ -188,6 +235,10 @@ void set_rgb_for_layer(uint8_t layer) {
             // Purple for function layer
             rgblight_sethsv_noeeprom(213, 255, 255); // Purple
             break;
+        case LAYER_GAMING:
+            // Bright red for gaming layer
+            rgblight_sethsv_noeeprom(0, 255, 255);   // Red
+            break;
         default:
             // Magenta for unknown layers
             rgblight_sethsv_noeeprom(234, 255, 255); // Magenta
@@ -253,6 +304,9 @@ void render_layer_state(void) {
             break;
         case LAYER_FN:
             oled_write_P(PSTR(" FUNC "), false);
+            break;
+        case LAYER_GAMING:
+            oled_write_P(PSTR(" GAME "), false);
             break;
         default:
             oled_write_P(PSTR("????  "), false);
@@ -325,6 +379,9 @@ bool oled_task_user(void) {
             case LAYER_FN:
                 layer_pos = 9; // Adjust for shorter name (2 chars)
                 break;
+            case LAYER_GAMING:
+                layer_pos = 8; // "GAME" is 4 chars
+                break;
             default:
                 layer_pos = 8; // Default for 4-char layer names
                 break;
@@ -350,6 +407,9 @@ bool oled_task_user(void) {
                 break;
             case LAYER_FN:
                 oled_write_P(PSTR("FN"), false);
+                break;
+            case LAYER_GAMING:
+                oled_write_P(PSTR("GAME"), false);
                 break;
             default:
                 oled_write_P(PSTR("???"), false);
@@ -453,6 +513,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
        XXXXXXX, _______, RGB_TOG_EE, RGB_HUI, RGB_SAI, RGB_VAI, XXXXXXX, KC_F1, KC_F2, KC_F3, KC_F10, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
                                   RGB_MOD, RGB_MOD, RGB_RMOD,   XXXXXXX, XXXXXXX, XXXXXXX
+  //                            ╰───────────────────────────╯ ╰──────────────────────────────╯
+  ),
+
+  [LAYER_GAMING] = LAYOUT_split_3x6_3(
+  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+       KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    XXXXXXX,
+  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L,    KC_QUOT, XXXXXXX,
+  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(TD_TO_BASE),
+  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+                                  KC_SPC,  KC_LALT, LT(LAYER_NUM, KC_ESC), KC_ENT, KC_BSPC, KC_DEL
   //                            ╰───────────────────────────╯ ╰──────────────────────────────╯
   ),
 };
