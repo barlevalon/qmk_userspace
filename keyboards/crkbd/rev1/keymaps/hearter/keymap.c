@@ -86,7 +86,7 @@ enum {
 void set_rgb_for_layer(uint8_t layer);
 
 // Tap dance functions
-void gaming_toggle_finished(qk_tap_dance_state_t *state, void *user_data) {
+void gaming_toggle_finished(tap_dance_state_t *state, void *user_data) {
     if (state->count >= 2) {
         // Double-tap or more: toggle the gaming layer
         layer_invert(LAYER_GAMING);
@@ -102,7 +102,7 @@ void gaming_toggle_finished(qk_tap_dance_state_t *state, void *user_data) {
     }
 }
 
-void gaming_toggle_reset(qk_tap_dance_state_t *state, void *user_data) {
+void gaming_toggle_reset(tap_dance_state_t *state, void *user_data) {
     // If the key was just tapped and not held, do nothing here
     // If it was held and then released, we already sent the key in the finished function
     if (state->count == 1 && state->pressed) {
@@ -111,7 +111,7 @@ void gaming_toggle_reset(qk_tap_dance_state_t *state, void *user_data) {
 }
 
 // Tap dance function to go back to base layer
-void to_base_finished(qk_tap_dance_state_t *state, void *user_data) {
+void to_base_finished(tap_dance_state_t *state, void *user_data) {
     if (state->count >= 2) {
         // Double-tap or more: go back to base layer
         layer_clear(); // Clear all layers and go back to base
@@ -120,7 +120,7 @@ void to_base_finished(qk_tap_dance_state_t *state, void *user_data) {
 }
 
 // Tap Dance definitions
-qk_tap_dance_action_t tap_dance_actions[] = {
+tap_dance_action_t tap_dance_actions[] = {
     [TD_GAMING_TOGGLE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, gaming_toggle_finished, gaming_toggle_reset),
     [TD_TO_BASE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, to_base_finished, NULL)
 };
