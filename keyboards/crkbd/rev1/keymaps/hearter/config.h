@@ -38,10 +38,9 @@
 #endif
 
 /* Improved key press behavior for fast typing */
-#define TAPPING_TERM 150  // Reduced from 200ms for faster response
-#define QUICK_TAP_TERM 120  // Quick tap optimization for fast typing
+#define TAPPING_TERM 175  // Balanced for 100 WPM without false positives
+#define QUICK_TAP_TERM 100  // Quick tap optimization for fast typing
 #define RETRO_TAPPING  // Send tap even if held longer than tapping term
-#define HOLD_ON_OTHER_KEY_PRESS  // Better for fast typing with home row mods
 
 /* Fast typing optimizations */
 #define DEBOUNCE 3  // Reduce from default 5ms for faster response
