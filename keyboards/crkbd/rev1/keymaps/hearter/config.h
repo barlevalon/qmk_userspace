@@ -37,10 +37,15 @@
 #    define RGBLIGHT_SLEEP                  // Turn off LEDs when computer goes to sleep
 #endif
 
-/* Improved key press behavior */
-#define TAPPING_TERM 200  // Increased from 175ms to reduce accidental mod activation
-#define PERMISSIVE_HOLD
-#define TAPPING_FORCE_HOLD        // Prevents repeated mod activations when holding
+/* Improved key press behavior for fast typing */
+#define TAPPING_TERM 150  // Reduced from 200ms for faster response
+#define QUICK_TAP_TERM 120  // Quick tap optimization for fast typing
+#define RETRO_TAPPING  // Send tap even if held longer than tapping term
+#define HOLD_ON_OTHER_KEY_PRESS  // Better for fast typing with home row mods
+
+/* Fast typing optimizations */
+#define DEBOUNCE 3  // Reduce from default 5ms for faster response
+#define USB_POLLING_INTERVAL_MS 1  // 1000Hz polling for gaming/fast typing
 
 /* Tap dance configuration */
 #define TAPPING_TERM_TAP_DANCE 200   // Time window for tap dance (ms)
