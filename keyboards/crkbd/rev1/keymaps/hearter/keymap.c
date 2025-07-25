@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
-#include <stdio.h>   // For sprintf
-#include <string.h>  // For strlen
 
 enum corne_keymap_layers {
     LAYER_BASE = 0,
@@ -64,7 +62,7 @@ enum corne_keymap_layers {
 typedef union {
     uint32_t raw;
     struct {
-        bool rgb_enabled :1;
+        bool rgb_enabled : 1;
         // You can add more settings here if needed
     };
 } user_config_t;
@@ -120,15 +118,12 @@ void to_base_finished(tap_dance_state_t *state, void *user_data) {
 }
 
 // Tap Dance definitions
-tap_dance_action_t tap_dance_actions[] = {
-    [TD_GAMING_TOGGLE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, gaming_toggle_finished, gaming_toggle_reset),
-    [TD_TO_BASE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, to_base_finished, NULL)
-};
+tap_dance_action_t tap_dance_actions[] = {[TD_GAMING_TOGGLE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, gaming_toggle_finished, gaming_toggle_reset), [TD_TO_BASE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, to_base_finished, NULL)};
 
 // Initialize user EEPROM with default values
 void eeconfig_init_user(void) {
     // Initialize the user EEPROM with default values
-    user_config.raw = 0;
+    user_config.raw         = 0;
     user_config.rgb_enabled = true; // RGB enabled by default
     eeconfig_update_user(user_config.raw);
 }
@@ -151,8 +146,8 @@ void keyboard_post_init_user(void) {
 #endif
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-    switch(keycode) {
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
         case TMUX:
             if (record->event.pressed) {
                 // on press
@@ -189,7 +184,7 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 
 // Custom bootmagic handling for RGB indicators
 void bootmagic_lite_reset_handler(void) {
-#ifdef RGBLIGHT_ENABLE
+#    ifdef RGBLIGHT_ENABLE
     // Flash all LEDs red as bootloader indication
     rgblight_enable_noeeprom();
 
@@ -204,12 +199,12 @@ void bootmagic_lite_reset_handler(void) {
     // Solid red for a moment before bootloader
     rgblight_setrgb(RGB_RED);
     wait_ms(100);
-#endif
+#    endif
 }
 
 // Define RGB colors for each layer
 void set_rgb_for_layer(uint8_t layer) {
-#ifdef RGBLIGHT_ENABLE
+#    ifdef RGBLIGHT_ENABLE
     switch (layer) {
         case LAYER_BASE:
             // More purple shade for base layer
@@ -221,15 +216,15 @@ void set_rgb_for_layer(uint8_t layer) {
             break;
         case LAYER_SYM:
             // Green for symbol layer
-            rgblight_sethsv_noeeprom(85, 255, 255);  // Green
+            rgblight_sethsv_noeeprom(85, 255, 255); // Green
             break;
         case LAYER_NAV:
             // Red-orange for navigation layer
-            rgblight_sethsv_noeeprom(10, 255, 255);  // Red-orange
+            rgblight_sethsv_noeeprom(10, 255, 255); // Red-orange
             break;
         case LAYER_MEDIA:
             // Bright yellow for media layer
-            rgblight_sethsv_noeeprom(43, 255, 255);  // Bright yellow
+            rgblight_sethsv_noeeprom(43, 255, 255); // Bright yellow
             break;
         case LAYER_FN:
             // Purple for function layer
@@ -237,31 +232,31 @@ void set_rgb_for_layer(uint8_t layer) {
             break;
         case LAYER_GAMING:
             // Bright red for gaming layer
-            rgblight_sethsv_noeeprom(0, 255, 255);   // Red
+            rgblight_sethsv_noeeprom(0, 255, 255); // Red
             break;
         default:
             // Magenta for unknown layers
             rgblight_sethsv_noeeprom(234, 255, 255); // Magenta
             break;
     }
-#endif
+#    endif
 }
 
 // Layer state change callback
 layer_state_t layer_state_set_user(layer_state_t state) {
-#ifdef RGBLIGHT_ENABLE
+#    ifdef RGBLIGHT_ENABLE
     // Only update RGB if it should be enabled (based on EEPROM setting)
     if (user_config.rgb_enabled) {
         // Enable RGB and set color based on active layer
         rgblight_enable_noeeprom();
         set_rgb_for_layer(get_highest_layer(state));
     }
-#endif
+#    endif
     return state;
 }
 
 bool shutdown_user(bool jump_to_bootloader) {
-#ifdef RGBLIGHT_ENABLE
+#    ifdef RGBLIGHT_ENABLE
     rgblight_enable_noeeprom();
 
     // Multiple flashes for visibility
@@ -275,11 +270,10 @@ bool shutdown_user(bool jump_to_bootloader) {
     // Final red for a moment
     rgblight_setrgb(RGB_RED);
     wait_ms(100);
-#endif
+#    endif
 
     return false;
 }
-
 
 // Print current layer with a visual indicator
 void render_layer_state(void) {
@@ -339,25 +333,6 @@ void render_keylogger(void) {
     // For now just display a placeholder
     oled_write_P(PSTR("KEY"), false);
 }
-
-// Render WPM counter
-void render_wpm(void) {
-#ifdef WPM_ENABLE
-    oled_write_P(PSTR("\nWPM\n "), false);
-
-    uint8_t n = get_current_wpm();
-    char wpm_str[4];
-    wpm_str[3] = '\0';
-    wpm_str[2] = '0' + n % 10;
-    wpm_str[1] = '0' + (n /= 10) % 10;
-    wpm_str[0] = '0' + n / 10;
-    oled_write(wpm_str, false);
-
-#else
-    oled_write_P(PSTR("\nWPM\n ---"), false);
-#endif
-}
-
 
 // Main OLED task function
 bool oled_task_user(void) {
@@ -420,9 +395,9 @@ bool oled_task_user(void) {
 
         char mods[5] = "    ";
         if (mod_state & MOD_MASK_SHIFT) mods[0] = 'S';
-        if (mod_state & MOD_MASK_CTRL)  mods[1] = 'C';
-        if (mod_state & MOD_MASK_ALT)   mods[2] = 'A';
-        if (mod_state & MOD_MASK_GUI)   mods[3] = 'G';
+        if (mod_state & MOD_MASK_CTRL) mods[1] = 'C';
+        if (mod_state & MOD_MASK_ALT) mods[2] = 'A';
+        if (mod_state & MOD_MASK_GUI) mods[3] = 'G';
 
         oled_set_cursor(8, 2);
         oled_write(mods, false);
