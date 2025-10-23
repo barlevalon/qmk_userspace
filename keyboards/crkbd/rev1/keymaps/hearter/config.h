@@ -18,36 +18,41 @@
 
 #ifdef VIA_ENABLE
 /* VIA configuration. */
-#    define DYNAMIC_KEYMAP_LAYER_COUNT 7  // Include GAMING layer
-#endif // VIA_ENABLE
+#    define DYNAMIC_KEYMAP_LAYER_COUNT 7 // Include GAMING layer
+#endif                                   // VIA_ENABLE
 
 /* Disable unused features. */
 #define NO_ACTION_ONESHOT
 
 /* For OLED or other display if present */
 #ifdef OLED_ENABLE
-#    define OLED_TIMEOUT 0  // Never timeout
-#    define OLED_BRIGHTNESS 255  // Maximum brightness
+#    define OLED_TIMEOUT 0      // Never timeout
+#    define OLED_BRIGHTNESS 255 // Maximum brightness
 #endif
-
 
 /* RGB configuration */
 #ifdef RGBLIGHT_ENABLE
-#    define RGBLIGHT_ANIMATIONS             // Enable all animations
-#    define RGBLIGHT_SLEEP                  // Turn off LEDs when computer goes to sleep
+#    define RGBLIGHT_ANIMATIONS // Enable all animations
+#    define RGBLIGHT_SLEEP      // Turn off LEDs when computer goes to sleep
 #endif
 
-/* Improved key press behavior for fast typing */
-#define TAPPING_TERM 175  // Balanced for 100 WPM without false positives
-#define QUICK_TAP_TERM 100  // Quick tap optimization for fast typing
-#define RETRO_TAPPING  // Send tap even if held longer than tapping term
+/* Homerow mods configuration for fast typing */
+#define TAPPING_TERM 200   // Increase from 175 to reduce accidental activations
+#define QUICK_TAP_TERM 120 // Increase from 100 for better rollover handling
+#define RETRO_TAPPING      // Send tap even if held longer than tapping term
+
+/* Prevent accidental mod activation during fast typing rolls */
+#define PERMISSIVE_HOLD // Mod activates only after tapping term expires for nested taps
+
+/* Optional: Per-key tapping term for fine control */
+#define TAPPING_TERM_PER_KEY
 
 /* Fast typing optimizations */
-#define DEBOUNCE 3  // Reduce from default 5ms for faster response
-#define USB_POLLING_INTERVAL_MS 1  // 1000Hz polling for gaming/fast typing
+#define DEBOUNCE 3                // Reduce from default 5ms for faster response
+#define USB_POLLING_INTERVAL_MS 1 // 1000Hz polling for gaming/fast typing
 
 /* Tap dance configuration */
-#define TAPPING_TERM_TAP_DANCE 200   // Time window for tap dance (ms)
+#define TAPPING_TERM_TAP_DANCE 200 // Time window for tap dance (ms)
 
 /* Split keyboard specific */
 #define SPLIT_TRANSPORT_MIRROR

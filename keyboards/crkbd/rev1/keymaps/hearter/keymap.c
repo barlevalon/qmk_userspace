@@ -275,6 +275,26 @@ bool shutdown_user(bool jump_to_bootloader) {
     return false;
 }
 
+// Per-key tapping term for homerow mods optimization
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        // Pinkies need more time (weaker fingers)
+        case HOME_A:
+        case HOME_QUO:
+            return TAPPING_TERM + 25;
+        // Ring fingers
+        case HOME_S:
+        case HOME_L:
+            return TAPPING_TERM + 10;
+        // Index fingers are faster
+        case HOME_F:
+        case HOME_J:
+            return TAPPING_TERM - 10;
+        default:
+            return TAPPING_TERM;
+    }
+}
+
 // Print current layer with a visual indicator
 void render_layer_state(void) {
     oled_write_P(PSTR("LAYER"), false);
