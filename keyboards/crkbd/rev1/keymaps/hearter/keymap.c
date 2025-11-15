@@ -18,12 +18,12 @@
 
 enum corne_keymap_layers {
     LAYER_BASE = 0,
+    LAYER_GAMING,
     LAYER_NUM,
     LAYER_SYM,
     LAYER_NAV,
     LAYER_MEDIA,
     LAYER_FN,
-    LAYER_GAMING,
 };
 
 #define NUM_BSPC LT(LAYER_NUM, KC_BSPC)
@@ -86,8 +86,12 @@ void set_rgb_for_layer(uint8_t layer);
 // Tap dance functions
 void gaming_toggle_finished(tap_dance_state_t *state, void *user_data) {
     if (state->count >= 2) {
-        // Double-tap or more: toggle the gaming layer
-        layer_invert(LAYER_GAMING);
+        // Double-tap or more: toggle the gaming layer as a temporary base
+        if (layer_state_is(LAYER_GAMING)) {
+            layer_move(LAYER_BASE);
+        } else {
+            layer_move(LAYER_GAMING);
+        }
     } else {
         // Single tap: perform the original key function (HYPR+Space)
         if (state->pressed) {
@@ -111,10 +115,9 @@ void gaming_toggle_reset(tap_dance_state_t *state, void *user_data) {
 // Tap dance function to go back to base layer
 void to_base_finished(tap_dance_state_t *state, void *user_data) {
     if (state->count >= 2) {
-        // Double-tap or more: go back to base layer
-        layer_clear(); // Clear all layers and go back to base
+        // Double-tap or more: go back to the primary base layer
+        layer_move(LAYER_BASE);
     }
-    // Single tap: Do nothing (matches ZMK behavior)
 }
 
 // Tap Dance definitions
@@ -505,9 +508,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX,    XXXXXXX, KC_F4,   KC_F5,   KC_F6,   KC_F11,   XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-       XXXXXXX, _______, RGB_TOG_EE, RGB_HUI, RGB_SAI, RGB_VAI, XXXXXXX, KC_F1, KC_F2, KC_F3, KC_F10, XXXXXXX,
+        XXXXXXX, _______, RGB_TOG_EE, UG_HUEU, UG_SATU, UG_VALU, XXXXXXX, KC_F1, KC_F2, KC_F3, KC_F10, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  RGB_MOD, RGB_MOD, RGB_RMOD,   XXXXXXX, XXXXXXX, XXXXXXX
+                                  UG_NEXT, UG_NEXT, UG_PREV,   XXXXXXX, XXXXXXX, XXXXXXX
   //                            ╰───────────────────────────╯ ╰──────────────────────────────╯
   ),
 
