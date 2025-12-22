@@ -385,18 +385,18 @@ wait_for_keyboard() {
     done
 }
 
-# Function to check if avrdude is installed
-check_avrdude() {
-    if ! command -v avrdude &> /dev/null; then
-        print_message "$RED" "Error: avrdude is not installed."
+# Function to check if QMK CLI is installed
+check_qmk_cli() {
+    if ! command -v qmk &> /dev/null; then
+        print_message "$RED" "Error: QMK CLI (qmk) is not installed."
         if [[ "$OS_NAME" == "Darwin" ]]; then
-            print_message "$YELLOW" "Please install it with: brew install avrdude"
+            print_message "$YELLOW" "Please install it with: brew install qmk/qmk/qmk"
         elif [[ -f "/etc/arch-release" ]]; then
-            print_message "$YELLOW" "Please install it with: sudo pacman -S avrdude"
+            print_message "$YELLOW" "Please install it with: sudo pacman -S qmk"
         else
             print_message "$YELLOW" "Please install it using your package manager."
         fi
-        return 1
+        exit 1
     fi
     return 0
 }
@@ -429,104 +429,22 @@ flash_firmware() {
         
         print_message "$GREEN" "Firmware copied to keyboard. Waiting for it to reboot..."
     elif [[ "$FLASH_METHOD" == "avrdude" ]]; then
-        # Check if avrdude is installed
-        if ! check_avrdude; then
-            print_message "$RED" "avrdude is required for flashing Corne keyboard."
-            print_message "$YELLOW" "You can manually flash the firmware with QMK Toolbox instead."
-            print_message "$YELLOW" "Firmware file is located at: $file"
-            read -p "Press Enter once you've manually flashed the firmware..."
-            return 0
+        # Check if QMK CLI is installed
+        check_qmk_cli
+        
+        print_message "$YELLOW" "Please put the $side half into bootloader mode by pressing the reset button."
+        print_message "$YELLOW" "QMK CLI will detect the keyboard and flash it automatically."
+        
+        # Use QMK CLI to flash the firmware file
+        # This handles port detection and flashing across platforms (macOS, Linux)
+        if ! qmk flash "$file"; then
+             print_message "$RED" "Failed to flash with qmk."
+             print_message "$YELLOW" "You can try again or use QMK Toolbox to flash: $file"
+             read -p "Press Enter once you've manually flashed the firmware..."
+             return 1
         fi
         
-        print_message "$YELLOW" "Put the $side half into bootloader mode by pressing the reset button."
-        print_message "$YELLOW" "You have 10 seconds to get into bootloader mode..."
-        
-        # Display a countdown
-        for i in {10..1}; do
-            print_message "$BLUE" "$i seconds remaining..."
-            sleep 1
-        done
-        
-        # Interactive port detection
-        print_message "$BLUE" "Looking for keyboard in bootloader mode..."
-        local port=""
-        local keep_trying=true
-        
-        while $keep_trying; do
-            # Try to detect the port
-            local ports_to_check=""
-            if [[ "$OS_NAME" == "Darwin" ]]; then
-                ports_to_check="/dev/tty.usbmodem* /dev/tty.usbserial* /dev/cu.usbmodem*"
-            else
-                ports_to_check="/dev/ttyACM* /dev/ttyUSB*"
-            fi
-
-            for p in $ports_to_check; do
-                if [[ -e "$p" ]]; then
-                    port="$p"
-                    break
-                fi
-            done
-            
-            if [[ -n "$port" ]]; then
-                # Found a port
-                print_message "$GREEN" "Found keyboard at $port"
-                break
-            else
-                # No port found, ask user what to do
-                print_message "$YELLOW" "No keyboard found in bootloader mode."
-                print_message "$YELLOW" "Make sure the $side half is connected and in bootloader mode."
-                print_message "$YELLOW" "Please press the reset button to put the keyboard in bootloader mode."
-                print_message "$BLUE" "Options:"
-                print_message "$BLUE" "  [r] - Retry detecting the keyboard"
-                print_message "$BLUE" "  [s] - Skip flashing this half (not recommended)"
-                print_message "$BLUE" "  [m] - Manually flash with another tool"
-                print_message "$BLUE" "  [q] - Quit"
-                read -p "What would you like to do? [r/s/m/q]: " choice
-                
-                case "$choice" in
-                    r|R) 
-                        print_message "$BLUE" "Retrying..."
-                        ;;
-                    s|S)
-                        print_message "$YELLOW" "Skipping $side half. Your keyboard may not work correctly."
-                        return 0
-                        ;;
-                    m|M)
-                        print_message "$YELLOW" "You can manually flash with QMK Toolbox using: $file"
-                        print_message "$YELLOW" "Or use avrdude directly with: avrdude -p atmega32u4 -c avr109 -P /path/to/port -U flash:w:$file:i"
-                        read -p "Press Enter once you've manually flashed the firmware..."
-                        return 0
-                        ;;
-                    q|Q)
-                        print_message "$RED" "Quitting at user request."
-                        exit 1
-                        ;;
-                    *)
-                        print_message "$YELLOW" "Invalid choice. Retrying..."
-                        ;;
-                esac
-            fi
-        done
-        
-        print_message "$GREEN" "Found keyboard at $port"
-        print_message "$BLUE" "Flashing with avrdude..."
-        
-        # Using avrdude to flash
-        # Use local config file if it exists to avoid system config issues
-        local config_arg=""
-        if [[ -f "avrdude.conf" ]]; then
-            config_arg="-C avrdude.conf"
-        fi
-
-        if ! avrdude $config_arg -p atmega32u4 -c avr109 -P "$port" -U flash:w:"$file":i; then
-            print_message "$RED" "Failed to flash with avrdude."
-            print_message "$YELLOW" "You can try again or use QMK Toolbox to flash: $file"
-            read -p "Press Enter once you've manually flashed the firmware..."
-            return 1
-        fi
-        
-        print_message "$GREEN" "Successfully flashed the $side half with avrdude."
+        print_message "$GREEN" "Successfully flashed the $side half with qmk."
         return 0
     else
         print_message "$RED" "Unknown flashing method: $FLASH_METHOD"
