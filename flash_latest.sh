@@ -11,6 +11,9 @@ set -o pipefail
 # GitHub repository containing your QMK userspace
 REPO="barlevalon/qmk_userspace"
 
+# Detect OS
+OS_NAME=$(uname -s)
+
 # Different keyboards use different bootloaders with different mount points
 # This will be set based on the keyboard type selected
 
@@ -26,7 +29,21 @@ case "$KEYBOARD" in
     FIRMWARE_FILE="bastardkb_charybdis_3x6__hearter.uf2"
     FIRMWARE_EXTENSION=".uf2"
     FLASH_METHOD="copy"
-    MOUNT_POINT="/Volumes/RPI-RP2"
+    if [[ "$OS_NAME" == "Darwin" ]]; then
+        MOUNT_POINT="/Volumes/RPI-RP2"
+    elif [[ "$OS_NAME" == "Linux" ]]; then
+        # Try common Linux mount points
+        if [[ -d "/run/media/$USER/RPI-RP2" ]]; then
+            MOUNT_POINT="/run/media/$USER/RPI-RP2"
+        elif [[ -d "/media/$USER/RPI-RP2" ]]; then
+            MOUNT_POINT="/media/$USER/RPI-RP2"
+        else
+            # Default to first common one, dynamic detection will handle it
+            MOUNT_POINT="/run/media/$USER/RPI-RP2" 
+        fi
+    else
+        MOUNT_POINT="/Volumes/RPI-RP2" # Default to macOS behavior
+    fi
     ;;
   "corne"|"crkbd"|"co")
     FIRMWARE_FILE="crkbd_rev1_hearter.hex"
@@ -76,7 +93,13 @@ print_message() {
 check_gh_cli() {
     if ! command -v gh &> /dev/null; then
         print_message "$RED" "Error: GitHub CLI (gh) is not installed."
-        print_message "$YELLOW" "Please install it with: brew install gh"
+        if [[ "$OS_NAME" == "Darwin" ]]; then
+            print_message "$YELLOW" "Please install it with: brew install gh"
+        elif [[ -f "/etc/arch-release" ]]; then
+            print_message "$YELLOW" "Please install it with: sudo pacman -S github-cli"
+        else
+            print_message "$YELLOW" "Please install it using your package manager."
+        fi
         exit 1
     fi
 }
@@ -85,7 +108,13 @@ check_gh_cli() {
 check_op_cli() {
     if ! command -v op &> /dev/null; then
         print_message "$RED" "Error: 1Password CLI is not installed."
-        print_message "$YELLOW" "Please install it with: brew install --cask 1password/tap/1password-cli"
+        if [[ "$OS_NAME" == "Darwin" ]]; then
+            print_message "$YELLOW" "Please install it with: brew install --cask 1password/tap/1password-cli"
+        elif [[ -f "/etc/arch-release" ]]; then
+            print_message "$YELLOW" "Please install it from the AUR (1password-cli)."
+        else
+            print_message "$YELLOW" "Please install it using your package manager."
+        fi
         exit 1
     fi
 }
@@ -241,6 +270,15 @@ wait_for_keyboard() {
     local keep_trying=true
     
     while $keep_trying; do
+        # Dynamic check for Linux mount points
+        if [[ "$OS_NAME" == "Linux" ]]; then
+             if [[ -d "/run/media/$USER/RPI-RP2" ]]; then
+                MOUNT_POINT="/run/media/$USER/RPI-RP2"
+            elif [[ -d "/media/$USER/RPI-RP2" ]]; then
+                MOUNT_POINT="/media/$USER/RPI-RP2"
+            fi
+        fi
+
         if [[ -d "$MOUNT_POINT" ]]; then
             print_message "$GREEN" "$side half of the keyboard detected at $MOUNT_POINT"
             
@@ -351,7 +389,13 @@ wait_for_keyboard() {
 check_avrdude() {
     if ! command -v avrdude &> /dev/null; then
         print_message "$RED" "Error: avrdude is not installed."
-        print_message "$YELLOW" "Please install it with: brew install avrdude"
+        if [[ "$OS_NAME" == "Darwin" ]]; then
+            print_message "$YELLOW" "Please install it with: brew install avrdude"
+        elif [[ -f "/etc/arch-release" ]]; then
+            print_message "$YELLOW" "Please install it with: sudo pacman -S avrdude"
+        else
+            print_message "$YELLOW" "Please install it using your package manager."
+        fi
         return 1
     fi
     return 0
@@ -410,7 +454,14 @@ flash_firmware() {
         
         while $keep_trying; do
             # Try to detect the port
-            for p in /dev/tty.usbmodem* /dev/tty.usbserial* /dev/cu.usbmodem*; do
+            local ports_to_check=""
+            if [[ "$OS_NAME" == "Darwin" ]]; then
+                ports_to_check="/dev/tty.usbmodem* /dev/tty.usbserial* /dev/cu.usbmodem*"
+            else
+                ports_to_check="/dev/ttyACM* /dev/ttyUSB*"
+            fi
+
+            for p in $ports_to_check; do
                 if [[ -e "$p" ]]; then
                     port="$p"
                     break
@@ -462,7 +513,13 @@ flash_firmware() {
         print_message "$BLUE" "Flashing with avrdude..."
         
         # Using avrdude to flash
-        if ! avrdude -p atmega32u4 -c avr109 -P "$port" -U flash:w:"$file":i; then
+        # Use local config file if it exists to avoid system config issues
+        local config_arg=""
+        if [[ -f "avrdude.conf" ]]; then
+            config_arg="-C avrdude.conf"
+        fi
+
+        if ! avrdude $config_arg -p atmega32u4 -c avr109 -P "$port" -U flash:w:"$file":i; then
             print_message "$RED" "Failed to flash with avrdude."
             print_message "$YELLOW" "You can try again or use QMK Toolbox to flash: $file"
             read -p "Press Enter once you've manually flashed the firmware..."
@@ -557,45 +614,67 @@ main() {
     # Remaining arguments are options
     options=("$@")
     
+    local local_file=""
+    if [[ "${options[0]}" == "--local" ]]; then
+        local_file="${options[1]}"
+        if [[ -z "$local_file" ]]; then
+            print_message "$RED" "Error: --local requires a file path."
+            exit 1
+        fi
+        shift 2
+        options=("$@")
+    fi
+
     print_message "$BLUE" "Starting keyboard firmware flashing process for $KEYBOARD..."
     
     # Check dependencies
     check_gh_cli
     check_op_cli
     
-    # Authenticate with GitHub
-    authenticate
+    # Authenticate with GitHub only if not using local file
+    if [[ -z "$local_file" ]]; then
+        check_gh_cli
+        check_op_cli
+        authenticate
+    fi
     
-    # Watch the workflow run if needed
-    if [[ "${options[0]}" != "--latest-successful" ]]; then
-        if ! watch_workflow; then
-            print_message "$RED" "Exiting due to workflow failure."
-            exit 1
+    # Watch the workflow run if needed (only if not local)
+    if [[ -z "$local_file" ]]; then
+        if [[ "${options[0]}" != "--latest-successful" ]]; then
+            if ! watch_workflow; then
+                print_message "$RED" "Exiting due to workflow failure."
+                exit 1
+            fi
+        else
+            print_message "$YELLOW" "Using latest successful build as requested."
+            
+            # If using latest successful, we need to find and use the latest successful run
+            local run_id
+            run_id=$(gh run list --repo "$REPO" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+            
+            if [[ -z "$run_id" ]]; then
+                print_message "$RED" "No successful workflow runs found."
+                exit 1
+            fi
+            
+            print_message "$GREEN" "Found successful workflow run: $run_id"
         fi
-    else
-        print_message "$YELLOW" "Using latest successful build as requested."
-        
-        # If using latest successful, we need to find and use the latest successful run
-        local run_id
-        run_id=$(gh run list --repo "$REPO" --status success --limit 1 --json databaseId -q '.[0].databaseId')
-        
-        if [[ -z "$run_id" ]]; then
-            print_message "$RED" "No successful workflow runs found."
-            exit 1
-        fi
-        
-        print_message "$GREEN" "Found successful workflow run: $run_id"
     fi
     
     # Download the firmware - using global variables
     FIRMWARE_PATH=""
     TMP_DIR=""
     
-    # Pass the run_id if we're using latest successful
-    if [[ "${options[0]}" == "--latest-successful" ]]; then
-        get_firmware "$run_id"
+    if [[ -n "$local_file" ]]; then
+        FIRMWARE_PATH="$local_file"
+        print_message "$GREEN" "Using local firmware file: $FIRMWARE_PATH"
     else
-        get_firmware
+        # Pass the run_id if we're using latest successful
+        if [[ "${options[0]}" == "--latest-successful" ]]; then
+            get_firmware "$run_id"
+        else
+            get_firmware
+        fi
     fi
     
     if [[ ! -f "$FIRMWARE_PATH" ]]; then
