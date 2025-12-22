@@ -133,6 +133,9 @@ void eeconfig_init_user(void) {
 
 // Read the user config from EEPROM and apply settings
 void keyboard_post_init_user(void) {
+    // Wait for power to stabilize to prevent OLED glitches
+    wait_ms(500);
+
     // Read the user config from EEPROM
     user_config.raw = eeconfig_read_user();
 
@@ -182,9 +185,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #ifdef OLED_ENABLE
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    if (!is_keyboard_master()) {
-        return OLED_ROTATION_180;
-    }
     return rotation;
 }
 
