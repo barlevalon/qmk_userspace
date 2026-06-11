@@ -122,20 +122,38 @@ authenticate() {
     print_message "$GREEN" "Already authenticated with GitHub."
 }
 
-# Function to get the latest workflow run status
+# Function to get the latest workflow run ID
+get_latest_workflow_run_id() {
+    local run_id
+    run_id=$(gh run list --repo "$REPO" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null) || {
+        print_message "$RED" "Failed to get latest workflow run."
+        exit 1
+    }
+
+    if [[ -z "$run_id" || "$run_id" == "null" ]]; then
+        print_message "$RED" "No workflow runs found."
+        exit 1
+    fi
+
+    echo "$run_id"
+}
+
+# Function to get a workflow run status
 get_workflow_status() {
+    local run_id=$1
     local status
-    status=$(gh run list --repo "$REPO" --limit 1 --json status -q '.[0].status' 2>/dev/null) || {
+    status=$(gh run view --repo "$REPO" "$run_id" --json status -q '.status' 2>/dev/null) || {
         print_message "$RED" "Failed to get workflow status."
         exit 1
     }
     echo "$status"
 }
 
-# Function to get the latest workflow run conclusion
+# Function to get a workflow run conclusion
 get_workflow_conclusion() {
+    local run_id=$1
     local conclusion
-    conclusion=$(gh run list --repo "$REPO" --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null) || {
+    conclusion=$(gh run view --repo "$REPO" "$run_id" --json conclusion -q '.conclusion' 2>/dev/null) || {
         print_message "$RED" "Failed to get workflow conclusion."
         exit 1
     }
@@ -458,37 +476,40 @@ flash_firmware() {
 
 # Function to watch the workflow run
 watch_workflow() {
+    local run_id
+    run_id=$(get_latest_workflow_run_id)
+
     local status
-    status=$(get_workflow_status)
-    
+    status=$(get_workflow_status "$run_id")
+
     if [[ "$status" == "completed" ]]; then
         local conclusion
-        conclusion=$(get_workflow_conclusion)
-        
+        conclusion=$(get_workflow_conclusion "$run_id")
+
         if [[ "$conclusion" == "success" ]]; then
-            print_message "$GREEN" "Latest workflow run completed successfully."
+            print_message "$GREEN" "Latest workflow run $run_id completed successfully."
             return 0
         else
-            print_message "$RED" "Latest workflow run failed with conclusion: $conclusion"
+            print_message "$RED" "Latest workflow run $run_id failed with conclusion: $conclusion"
             return 1
         fi
     fi
-    
-    print_message "$BLUE" "Watching the latest workflow run..."
-    if ! gh run watch --repo "$REPO"; then
-        print_message "$RED" "Workflow run failed."
+
+    print_message "$BLUE" "Watching latest workflow run $run_id..."
+    if ! gh run watch --repo "$REPO" "$run_id" --exit-status; then
+        print_message "$RED" "Workflow run $run_id failed."
         return 1
     fi
-    
+
     # Double-check the conclusion after watching
     local conclusion
-    conclusion=$(get_workflow_conclusion)
-    
+    conclusion=$(get_workflow_conclusion "$run_id")
+
     if [[ "$conclusion" == "success" ]]; then
-        print_message "$GREEN" "Workflow run completed successfully."
+        print_message "$GREEN" "Workflow run $run_id completed successfully."
         return 0
     else
-        print_message "$RED" "Workflow run failed with conclusion: $conclusion"
+        print_message "$RED" "Workflow run $run_id failed with conclusion: $conclusion"
         return 1
     fi
 }
