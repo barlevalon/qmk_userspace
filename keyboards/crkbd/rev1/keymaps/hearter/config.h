@@ -57,4 +57,5 @@
 #define TAPPING_TERM_TAP_DANCE 200 // Time window for tap dance (ms)
 
 /* Split keyboard specific */
+#define EE_HANDS
 #define SPLIT_TRANSPORT_MIRROR

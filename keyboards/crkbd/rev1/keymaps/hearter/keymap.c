@@ -141,8 +141,8 @@ void keyboard_post_init_user(void) {
 
 #ifdef OLED_ENABLE
     // The right/offhand OLED panel is visibly brighter than the left.
-    // Keep the master at configured brightness and dim the slave panel.
-    if (!is_keyboard_master()) {
+    // Keep the left panel at configured brightness and dim the right panel.
+    if (!is_keyboard_left()) {
         oled_set_brightness(160);
     }
 #endif
@@ -205,8 +205,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     // Upstream crkbd rotates the offhand OLED 180° at keyboard level.
     // This build's displays are mounted in the same orientation; forcing
-    // the slave/offhand back to 0° avoids the right OLED corruption.
-    if (!is_keyboard_master()) {
+    // the right OLED back to 0° avoids corruption.
+    if (!is_keyboard_left()) {
         return OLED_ROTATION_0;
     }
     return rotation;
@@ -389,7 +389,7 @@ bool oled_task_user(void) {
     // Clear the display
     oled_clear();
 
-    if (is_keyboard_master()) {
+    if (is_keyboard_left()) {
         // Left OLED - Show centered layer name and mods
 
         // Layer name - centered

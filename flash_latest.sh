@@ -33,6 +33,8 @@ case "$KEYBOARD" in
     FIRMWARE_FILE="crkbd_rev1_hearter.hex"
     FIRMWARE_EXTENSION=".hex"
     FLASH_METHOD="avrdude"
+    QMK_KEYBOARD="crkbd/rev1"
+    QMK_KEYMAP="hearter"
     ;;
   *)
     echo "Unknown keyboard: $KEYBOARD"
@@ -413,16 +415,22 @@ flash_firmware() {
         print_message "$YELLOW" "Please put the $side half into bootloader mode by pressing the reset button."
         print_message "$YELLOW" "QMK CLI will detect the keyboard and flash it automatically."
         
-        # Use QMK CLI to flash the firmware file
-        # This handles port detection and flashing across platforms (macOS, Linux)
-        if ! qmk flash "$file"; then
-             print_message "$RED" "Failed to flash with qmk."
-             print_message "$YELLOW" "You can try again or use QMK Toolbox to flash: $file"
+        # Build and flash the side-specific target so QMK also writes EE_HANDS
+        # handedness to EEPROM. qmk flash <hex> ignores -bl for prebuilt files.
+        local bootloader="avrdude-split-left"
+        if [[ "$side" == "RIGHT" ]]; then
+            bootloader="avrdude-split-right"
+        fi
+
+        print_message "$BLUE" "Using QMK target $QMK_KEYBOARD:$QMK_KEYMAP:$bootloader to set split handedness."
+        if ! qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl "$bootloader"; then
+             print_message "$RED" "Failed to build/flash with qmk."
+             print_message "$YELLOW" "The downloaded firmware was: $file"
              read -p "Press Enter once you've manually flashed the firmware..."
              return 1
         fi
         
-        print_message "$GREEN" "Successfully flashed the $side half with qmk."
+        print_message "$GREEN" "Successfully flashed the $side half with qmk and set EEPROM handedness."
         return 0
     else
         print_message "$RED" "Unknown flashing method: $FLASH_METHOD"
@@ -633,7 +641,6 @@ main() {
     # All done
     print_message "$GREEN" "Both halves of your keyboard have been flashed successfully!"
     print_message "$YELLOW" "Reconnect USB to the LEFT half for normal Corne use."
-    print_message "$YELLOW" "If USB remains on RIGHT after flashing, that side is master and will show the layer display."
     print_message "$GREEN" "Your keyboard is ready to use."
     
     # Clean up
