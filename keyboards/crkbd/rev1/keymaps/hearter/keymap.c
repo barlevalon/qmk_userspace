@@ -143,11 +143,7 @@ void keyboard_post_init_user(void) {
     user_config.raw = eeconfig_read_user();
 
 #ifdef OLED_ENABLE
-    // The right/offhand OLED panel is visibly brighter than the left.
-    // Keep the left panel at configured brightness and dim the right panel.
-    if (!oled_is_left_side()) {
-        oled_set_brightness(32);
-    }
+    oled_set_brightness(OLED_BRIGHTNESS);
 #endif
 
 #ifdef RGBLIGHT_ENABLE
@@ -463,7 +459,7 @@ bool oled_task_user(void) {
         oled_write(mods, false);
     } else {
         // Right OLED - static identity display. Keep it independent of layer state.
-        oled_set_brightness(32);
+        oled_set_brightness(OLED_BRIGHTNESS);
         oled_set_cursor(7, 1);
         oled_write_P(PSTR("HEARTER"), false);
         oled_set_cursor(8, 2);
