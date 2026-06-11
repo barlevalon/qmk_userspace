@@ -29,26 +29,6 @@ fi
 
 # Set firmware file and flashing method based on selected keyboard
 case "$KEYBOARD" in
-  "charybdis"|"ch")
-    FIRMWARE_FILE="bastardkb_charybdis_3x6__hearter.uf2"
-    FIRMWARE_EXTENSION=".uf2"
-    FLASH_METHOD="copy"
-    if [[ "$OS_NAME" == "Darwin" ]]; then
-        MOUNT_POINT="/Volumes/RPI-RP2"
-    elif [[ "$OS_NAME" == "Linux" ]]; then
-        # Try common Linux mount points
-        if [[ -d "/run/media/$USER/RPI-RP2" ]]; then
-            MOUNT_POINT="/run/media/$USER/RPI-RP2"
-        elif [[ -d "/media/$USER/RPI-RP2" ]]; then
-            MOUNT_POINT="/media/$USER/RPI-RP2"
-        else
-            # Default to first common one, dynamic detection will handle it
-            MOUNT_POINT="/run/media/$USER/RPI-RP2" 
-        fi
-    else
-        MOUNT_POINT="/Volumes/RPI-RP2" # Default to macOS behavior
-    fi
-    ;;
   "corne"|"crkbd"|"co")
     FIRMWARE_FILE="crkbd_rev1_hearter.hex"
     FIRMWARE_EXTENSION=".hex"
@@ -56,7 +36,7 @@ case "$KEYBOARD" in
     ;;
   *)
     echo "Unknown keyboard: $KEYBOARD"
-    echo "Available options: charybdis (ch), corne (co/crkbd)"
+    echo "Available options: corne (co/crkbd)"
     exit 1
     ;;
 esac
@@ -526,7 +506,7 @@ cleanup() {
 main() {
     # Skip the first argument if it's a keyboard name
     local options=()
-    if [[ "$1" == "charybdis" || "$1" == "ch" || "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
+    if [[ "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
         shift # Skip the keyboard argument since we've already processed it
     fi
     
@@ -667,7 +647,6 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo ""
     echo -e "${YELLOW}Keyboards:${NC}"
     echo "  corne, crkbd, co      Flash Corne v3 keyboard (default)"
-    echo "  charybdis, ch         Flash Charybdis 3x6 keyboard"
     echo ""
     echo -e "${YELLOW}Options:${NC}"
     echo "  --latest-successful   Use the latest successful build regardless of current workflow status"
@@ -685,9 +664,7 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  1. Run this script after pushing changes to your keyboard firmware"
     echo "  2. The script will download the latest firmware build"
     echo "  3. Follow the prompts to enter bootloader mode for each half"
-    echo "  4. For Charybdis keyboards:"
-    echo "     - Put your keyboard in bootloader mode by pressing the reset button twice quickly"
-    echo "  5. For Corne keyboards:"
+    echo "  4. For Corne keyboards:"
     echo "     - The script will use qmk flash to flash the firmware"
     echo "     - You'll need to press the reset button when prompted"
     echo "     - Make sure qmk is installed: sudo pacman -S qmk"
@@ -701,16 +678,8 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
 fi
 
 # Process keyboard selection if present
-if [[ "$1" == "charybdis" || "$1" == "ch" || "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
-    # Set the canonical keyboard name
-    case "$1" in
-      "charybdis"|"ch")
-        KEYBOARD="charybdis"
-        ;;
-      "corne"|"crkbd"|"co")
-        KEYBOARD="corne"
-        ;;
-    esac
+if [[ "$1" == "corne" || "$1" == "crkbd" || "$1" == "co" ]]; then
+    KEYBOARD="corne"
     shift
 fi
 
