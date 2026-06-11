@@ -139,6 +139,14 @@ void keyboard_post_init_user(void) {
     // Read the user config from EEPROM
     user_config.raw = eeconfig_read_user();
 
+#ifdef OLED_ENABLE
+    // The right/offhand OLED panel is visibly brighter than the left.
+    // Keep the master at configured brightness and dim the slave panel.
+    if (!is_keyboard_master()) {
+        oled_set_brightness(160);
+    }
+#endif
+
 #ifdef RGBLIGHT_ENABLE
     // Apply the RGB enabled state from EEPROM
     if (user_config.rgb_enabled) {
