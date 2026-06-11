@@ -214,11 +214,10 @@ static bool oled_is_left_side(void) {
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    // Upstream crkbd rotates the offhand OLED 180° at keyboard level.
-    // This build's displays are mounted in the same orientation; forcing
-    // the right OLED back to 0° avoids corruption.
+    // The right OLED is physically mounted upside down relative to the left.
+    // Rotate it 180° after side identity has been set via EE_HANDS.
     if (!oled_is_left_side()) {
-        return OLED_ROTATION_0;
+        return OLED_ROTATION_180;
     }
     return rotation;
 }
