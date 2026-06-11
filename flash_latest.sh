@@ -632,6 +632,8 @@ main() {
     
     # All done
     print_message "$GREEN" "Both halves of your keyboard have been flashed successfully!"
+    print_message "$YELLOW" "Reconnect USB to the LEFT half for normal Corne use."
+    print_message "$YELLOW" "If USB remains on RIGHT after flashing, that side is master and will show the layer display."
     print_message "$GREEN" "Your keyboard is ready to use."
     
     # Clean up

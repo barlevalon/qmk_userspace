@@ -195,6 +195,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #ifdef OLED_ENABLE
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    // Upstream crkbd rotates the offhand OLED 180° at keyboard level.
+    // This build's displays are mounted in the same orientation; forcing
+    // the slave/offhand back to 0° avoids the right OLED corruption.
+    if (!is_keyboard_master()) {
+        return OLED_ROTATION_0;
+    }
     return rotation;
 }
 
