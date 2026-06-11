@@ -464,8 +464,8 @@ bool oled_task_user(void) {
     } else {
         // Right OLED - static identity display. Keep it independent of layer state.
         oled_set_brightness(32);
-        oled_set_cursor(8, 1);
-        oled_write_P(PSTR("RIGHT"), false);
+        oled_set_cursor(7, 1);
+        oled_write_P(PSTR("HEARTER"), false);
         oled_set_cursor(8, 2);
         oled_write_P(PSTR("crkbd"), false);
     }
