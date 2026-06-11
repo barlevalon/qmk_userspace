@@ -14,17 +14,23 @@ This is the QMK Userspace for my custom keyboard keymaps.
 
 ## Flashing Instructions
 
+Prerequisites:
+- GitHub CLI (`gh`) installed and authenticated (`gh auth login`) or `GH_TOKEN` set
+  - Arch: `sudo pacman -S github-cli`
+- QMK CLI (`qmk`) installed for Corne flashing
+  - Arch: `sudo pacman -S qmk`
+
 Use the `flash_latest.sh` script to flash your keyboard:
 
 ```bash
-# Flash Charybdis (default)
-./flash_latest.sh 
+# Flash Corne (default)
+./flash_latest.sh
 
-# Flash Corne
-./flash_latest.sh corne
+# Flash Charybdis
+./flash_latest.sh charybdis
 
 # Flash with latest successful build
-./flash_latest.sh corne --latest-successful
+./flash_latest.sh --latest-successful
 ```
 
 ## Building Firmware

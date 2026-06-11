@@ -20,8 +20,12 @@ OS_NAME=$(uname -s)
 # GitHub workflow artifact name
 FIRMWARE_NAME="Firmware"
 
-# Keyboard selection
-KEYBOARD=${1:-"charybdis"} # Default to Charybdis if no argument provided
+# Keyboard selection. Default to Corne if no keyboard argument was provided.
+if [[ -z "$1" || "$1" == --* || "$1" == "-h" ]]; then
+    KEYBOARD="corne"
+else
+    KEYBOARD="$1"
+fi
 
 # Set firmware file and flashing method based on selected keyboard
 case "$KEYBOARD" in
@@ -56,9 +60,6 @@ case "$KEYBOARD" in
     exit 1
     ;;
 esac
-
-# 1Password item for GitHub token (optional)
-OP_GITHUB_TOKEN_PATH="op://Private/github/token"
 
 # Timeout for keyboard reboot (seconds)
 KEYBOARD_REBOOT_TIMEOUT=15
@@ -104,42 +105,21 @@ check_gh_cli() {
     fi
 }
 
-# Function to check if 1Password CLI is installed
-check_op_cli() {
-    if ! command -v op &> /dev/null; then
-        print_message "$RED" "Error: 1Password CLI is not installed."
-        if [[ "$OS_NAME" == "Darwin" ]]; then
-            print_message "$YELLOW" "Please install it with: brew install --cask 1password/tap/1password-cli"
-        elif [[ -f "/etc/arch-release" ]]; then
-            print_message "$YELLOW" "Please install it from the AUR (1password-cli)."
-        else
-            print_message "$YELLOW" "Please install it using your package manager."
-        fi
-        exit 1
-    fi
-}
-
 # Function to authenticate with GitHub
 authenticate() {
     print_message "$BLUE" "Authenticating with GitHub..."
-    
-    if [[ -z "${GH_TOKEN}" ]]; then
-        # Try to get the token from 1Password
-        if ! GH_TOKEN=$(op read "$OP_GITHUB_TOKEN_PATH" 2>/dev/null); then
-            print_message "$RED" "Failed to get GitHub token from 1Password."
-            print_message "$YELLOW" "Trying to authenticate with gh auth status..."
-            
-            if ! gh auth status &>/dev/null; then
-                print_message "$RED" "Not authenticated with GitHub. Please run 'gh auth login' or provide a token."
-                exit 1
-            else
-                print_message "$GREEN" "Already authenticated with GitHub."
-            fi
-        else
-            export GH_TOKEN
-            print_message "$GREEN" "Successfully retrieved GitHub token from 1Password."
-        fi
+
+    if [[ -n "${GH_TOKEN}" ]]; then
+        print_message "$GREEN" "Using GH_TOKEN from environment."
+        return 0
     fi
+
+    if ! gh auth status &>/dev/null; then
+        print_message "$RED" "Not authenticated with GitHub. Please run 'gh auth login' or set GH_TOKEN."
+        exit 1
+    fi
+
+    print_message "$GREEN" "Already authenticated with GitHub."
 }
 
 # Function to get the latest workflow run status
@@ -547,12 +527,9 @@ main() {
     
     # Check dependencies
     check_gh_cli
-    check_op_cli
-    
+
     # Authenticate with GitHub only if not using local file
     if [[ -z "$local_file" ]]; then
-        check_gh_cli
-        check_op_cli
         authenticate
     fi
     
@@ -668,8 +645,8 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo -e "${YELLOW}Usage:${NC} $0 [keyboard] [options]"
     echo ""
     echo -e "${YELLOW}Keyboards:${NC}"
-    echo "  charybdis, ch         Flash Charybdis 3x6 keyboard (default)"
-    echo "  corne, crkbd, co      Flash Corne v3 keyboard"
+    echo "  corne, crkbd, co      Flash Corne v3 keyboard (default)"
+    echo "  charybdis, ch         Flash Charybdis 3x6 keyboard"
     echo ""
     echo -e "${YELLOW}Options:${NC}"
     echo "  --latest-successful   Use the latest successful build regardless of current workflow status"
@@ -677,8 +654,10 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  --help, -h            Show this help message"
     echo ""
     echo -e "${YELLOW}Prerequisites:${NC}"
-    echo "  - GitHub CLI (gh) must be installed and authenticated"
-    echo "  - 1Password CLI (op) is recommended for secure token retrieval"
+    echo "  - GitHub CLI (gh) must be installed and authenticated with 'gh auth login' or GH_TOKEN"
+    echo "    Arch: sudo pacman -S github-cli"
+    echo "  - QMK CLI (qmk) must be installed for Corne flashing"
+    echo "    Arch: sudo pacman -S qmk"
     echo "  - QMK firmware must be built using GitHub Actions"
     echo ""
     echo -e "${YELLOW}Instructions:${NC}"
@@ -688,9 +667,9 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  4. For Charybdis keyboards:"
     echo "     - Put your keyboard in bootloader mode by pressing the reset button twice quickly"
     echo "  5. For Corne keyboards:"
-    echo "     - The script will use avrdude to flash the firmware"
+    echo "     - The script will use qmk flash to flash the firmware"
     echo "     - You'll need to press the reset button when prompted"
-    echo "     - Make sure avrdude is installed: brew install avrdude"
+    echo "     - Make sure qmk is installed: sudo pacman -S qmk"
     echo ""
     echo -e "${YELLOW}Troubleshooting:${NC}"
     echo "  - If no firmware is found, check your GitHub workflow"
