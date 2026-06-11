@@ -412,7 +412,9 @@ flash_firmware() {
         # Check if QMK CLI is installed
         check_qmk_cli
         
-        print_message "$YELLOW" "Please put the $side half into bootloader mode by pressing the reset button."
+        print_message "$YELLOW" "Unplug TRRS before flashing."
+        print_message "$YELLOW" "Plug USB directly into the $side half only."
+        print_message "$YELLOW" "Then put the $side half into bootloader mode by pressing the reset button."
         print_message "$YELLOW" "QMK CLI will detect the keyboard and flash it automatically."
         
         # Build and flash the side-specific target so QMK also writes EE_HANDS
@@ -589,6 +591,7 @@ main() {
     # Flash process with user interaction
     print_message "$BLUE" "Starting the flashing process..."
     print_message "$YELLOW" "This script will help you flash both halves of your keyboard."
+    print_message "$YELLOW" "Disconnect TRRS while flashing; flash each half over USB directly."
     
     # Different processes based on keyboard type
     if [[ "$FLASH_METHOD" == "copy" ]]; then

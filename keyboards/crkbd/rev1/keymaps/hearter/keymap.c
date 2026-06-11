@@ -82,6 +82,9 @@ enum {
 
 // Forward declarations
 void set_rgb_for_layer(uint8_t layer);
+#ifdef OLED_ENABLE
+static bool oled_is_left_side(void);
+#endif
 
 // Tap dance functions
 void gaming_toggle_finished(tap_dance_state_t *state, void *user_data) {
@@ -142,8 +145,8 @@ void keyboard_post_init_user(void) {
 #ifdef OLED_ENABLE
     // The right/offhand OLED panel is visibly brighter than the left.
     // Keep the left panel at configured brightness and dim the right panel.
-    if (!is_keyboard_left()) {
-        oled_set_brightness(160);
+    if (!oled_is_left_side()) {
+        oled_set_brightness(32);
     }
 #endif
 
@@ -202,11 +205,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 #ifdef OLED_ENABLE
 
+static bool oled_is_left_side(void) {
+#    ifdef EE_HANDS
+    return eeconfig_read_handedness();
+#    else
+    return is_keyboard_left();
+#    endif
+}
+
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     // Upstream crkbd rotates the offhand OLED 180° at keyboard level.
     // This build's displays are mounted in the same orientation; forcing
     // the right OLED back to 0° avoids corruption.
-    if (!is_keyboard_left()) {
+    if (!oled_is_left_side()) {
         return OLED_ROTATION_0;
     }
     return rotation;
@@ -389,7 +400,7 @@ bool oled_task_user(void) {
     // Clear the display
     oled_clear();
 
-    if (is_keyboard_left()) {
+    if (oled_is_left_side()) {
         // Left OLED - Show centered layer name and mods
 
         // Layer name - centered
@@ -452,13 +463,10 @@ bool oled_task_user(void) {
         oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
-        // Right OLED - Display "HEARTER" text
-
-        // Place HEARTER centered on line 2
-        // The OLED is 21 characters wide (128 pixels / 6 pixels per char)
-        // "HEARTER" is 7 characters, so start at position (21-7)/2 = 7
-        oled_set_cursor(7, 1);
-        oled_write_P(PSTR("HEARTER"), false);
+        // Right OLED - static identity display. Keep it independent of layer state.
+        oled_set_brightness(32);
+        oled_set_cursor(8, 1);
+        oled_write_P(PSTR("RIGHT"), false);
         oled_set_cursor(8, 2);
         oled_write_P(PSTR("crkbd"), false);
     }
