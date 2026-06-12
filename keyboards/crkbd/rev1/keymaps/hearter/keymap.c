@@ -159,16 +159,6 @@ void keyboard_post_init_user(void) {
 #endif
 }
 
-bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case HOME_F:
-        case HOME_J:
-            return true;
-        default:
-            return false;
-    }
-}
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case TMUX:
@@ -322,10 +312,10 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         case HOME_S:
         case HOME_L:
             return TAPPING_TERM + 10;
-        // Index fingers are faster
+        // Shift home-row mods need more time to avoid accidental capitals on rolls
         case HOME_F:
         case HOME_J:
-            return TAPPING_TERM - 10;
+            return TAPPING_TERM + 20;
         default:
             return TAPPING_TERM;
     }

@@ -42,9 +42,8 @@
 #define RETRO_TAPPING      // Send tap even if held longer than tapping term
 
 /* Tap-hold tuning for home-row mods */
-#define PERMISSIVE_HOLD                 // Convert nested opposite-hand chords to holds
-#define CHORDAL_HOLD                    // Same-hand rolls stay taps; opposite-hand chords may hold
-#define HOLD_ON_OTHER_KEY_PRESS_PER_KEY // Let selected keys settle as holds on rolls
+#define PERMISSIVE_HOLD // Convert nested opposite-hand chords to holds
+#define CHORDAL_HOLD    // Same-hand rolls stay taps; opposite-hand chords may hold
 
 /* Optional: Per-key tapping term for fine control */
 #define TAPPING_TERM_PER_KEY
