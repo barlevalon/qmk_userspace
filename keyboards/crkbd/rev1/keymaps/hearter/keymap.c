@@ -427,17 +427,14 @@ bool oled_task_user(void) {
         oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
-        static bool right_oled_cleared = false;
-        if (!right_oled_cleared) {
-            oled_clear();
-            right_oled_cleared = true;
-        }
+        oled_clear();
 
         // Right OLED - static identity display. Keep it independent of layer state.
+        // Start at x=0: the right display's effective width wraps centered text.
         oled_set_brightness(OLED_BRIGHTNESS);
-        oled_set_cursor(7, 1);
+        oled_set_cursor(0, 1);
         oled_write_P(PSTR("HEARTER"), false);
-        oled_set_cursor(8, 2);
+        oled_set_cursor(0, 2);
         oled_write_P(PSTR("crkbd"), false);
     }
 
