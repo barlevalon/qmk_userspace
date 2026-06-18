@@ -4,6 +4,8 @@
 # Actions workflows to both halves of a split keyboard.
 set -o pipefail
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
 #################################################
 # USER CONFIGURATION - CUSTOMIZE THESE VALUES
 #################################################
@@ -425,7 +427,8 @@ flash_firmware() {
         fi
 
         print_message "$BLUE" "Using QMK target $QMK_KEYBOARD:$QMK_KEYMAP:$bootloader to set split handedness."
-        if ! qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl "$bootloader"; then
+        print_message "$YELLOW" "For AVR EE_HANDS, this rebuilds local userspace from $SCRIPT_DIR instead of flashing the downloaded hex directly."
+        if ! (cd "$SCRIPT_DIR" && qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl "$bootloader"); then
              print_message "$RED" "Failed to build/flash with qmk."
              print_message "$YELLOW" "The downloaded firmware was: $file"
              read -p "Press Enter once you've manually flashed the firmware..."
@@ -677,7 +680,7 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "  2. The script will download the latest firmware build"
     echo "  3. Follow the prompts to enter bootloader mode for each half"
     echo "  4. For Corne keyboards:"
-    echo "     - The script will use qmk flash to flash the firmware"
+    echo "     - The script will use qmk flash to build local userspace and set EE_HANDS"
     echo "     - You'll need to press the reset button when prompted"
     echo "     - Make sure qmk is installed: sudo pacman -S qmk"
     echo ""

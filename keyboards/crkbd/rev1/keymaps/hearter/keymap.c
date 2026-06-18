@@ -427,10 +427,10 @@ bool oled_task_user(void) {
         oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
-        static uint32_t right_oled_last_clear = 0;
-        if (timer_elapsed32(right_oled_last_clear) > 5000) {
+        static bool right_oled_cleared = false;
+        if (!right_oled_cleared) {
             oled_clear();
-            right_oled_last_clear = timer_read32();
+            right_oled_cleared = true;
         }
 
         // Right OLED - static identity display. Keep it independent of layer state.
@@ -509,7 +509,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [LAYER_FN] = LAYOUT_split_3x6_3(
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
-       QK_BOOT,  EE_CLR, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_F7,   KC_F8,   KC_F9,   KC_F12,   QK_BOOT,
+       QK_BOOT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_F7,   KC_F8,   KC_F9,   KC_F12,   QK_BOOT,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX,    XXXXXXX, KC_F4,   KC_F5,   KC_F6,   KC_F11,   XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤

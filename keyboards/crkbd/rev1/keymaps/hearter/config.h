@@ -43,8 +43,9 @@
 #define RETRO_TAPPING      // Send tap even if held longer than tapping term
 
 /* Tap-hold tuning for home-row mods */
-#define PERMISSIVE_HOLD // Convert nested opposite-hand chords to holds
-#define CHORDAL_HOLD    // Same-hand rolls stay taps; opposite-hand chords may hold
+#define PERMISSIVE_HOLD  // Convert nested opposite-hand chords to holds
+#define CHORDAL_HOLD     // Same-hand rolls stay taps; opposite-hand chords may hold
+#define FLOW_TAP_TERM 150 // Fast typing flow settles home-row mods as taps
 
 /* Fast typing optimizations */
 #define DEBOUNCE 3                // Reduce from default 5ms for faster response
