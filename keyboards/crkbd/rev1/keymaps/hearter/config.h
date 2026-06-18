@@ -26,8 +26,9 @@
 
 /* For OLED or other display if present */
 #ifdef OLED_ENABLE
-#    define OLED_TIMEOUT 0      // Never timeout
-#    define OLED_BRIGHTNESS 255 // Maximum brightness
+#    define OLED_TIMEOUT 0         // Never timeout
+#    define OLED_BRIGHTNESS 255    // Maximum brightness
+#    define OLED_UPDATE_INTERVAL 100 // Reduce OLED bus churn
 #endif
 
 /* RGB configuration */

@@ -362,10 +362,9 @@ void render_keylogger(void) {
 
 // Main OLED task function
 bool oled_task_user(void) {
-    // Clear the display
-    oled_clear();
-
     if (oled_is_left_side()) {
+        // Left OLED changes with layer/mod state; clear before redraw.
+        oled_clear();
         // Left OLED - Show centered layer name and mods
 
         // Layer name - centered
@@ -428,6 +427,12 @@ bool oled_task_user(void) {
         oled_set_cursor(8, 2);
         oled_write(mods, false);
     } else {
+        static uint32_t right_oled_last_clear = 0;
+        if (timer_elapsed32(right_oled_last_clear) > 5000) {
+            oled_clear();
+            right_oled_last_clear = timer_read32();
+        }
+
         // Right OLED - static identity display. Keep it independent of layer state.
         oled_set_brightness(OLED_BRIGHTNESS);
         oled_set_cursor(7, 1);
