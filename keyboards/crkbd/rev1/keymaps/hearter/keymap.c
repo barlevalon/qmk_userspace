@@ -200,9 +200,9 @@ static bool oled_is_left_side(void) {
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    // Right OLED is mounted vertically; rotate so text runs along its length.
+    // Diagnostic: right OLED rotated lengthwise with bounded single-character writes.
     if (!oled_is_left_side()) {
-        return OLED_ROTATION_270;
+        return OLED_ROTATION_90;
     }
     return rotation;
 }
@@ -428,14 +428,23 @@ bool oled_task_user(void) {
     } else {
         oled_clear();
 
-        // Right OLED - static identity display. Keep it independent of layer state.
-        // With 90/270 rotation the text grid is narrow, so stack characters along
-        // the OLED's long axis instead of writing a long horizontal string.
+        // Right OLED diagnostic: one character per row to avoid wrapping on the
+        // narrow 90° text grid.
         oled_set_brightness(OLED_BRIGHTNESS);
-        oled_set_cursor(2, 0);
-        oled_write_P(PSTR("H\n  E\n  A\n  R\n  T\n  E\n  R"), false);
-        oled_set_cursor(2, 9);
-        oled_write_P(PSTR("c\n  r\n  k\n  b\n  d"), false);
+        oled_set_cursor(0, 0);
+        oled_write_P(PSTR("H"), false);
+        oled_set_cursor(0, 1);
+        oled_write_P(PSTR("E"), false);
+        oled_set_cursor(0, 2);
+        oled_write_P(PSTR("A"), false);
+        oled_set_cursor(0, 3);
+        oled_write_P(PSTR("R"), false);
+        oled_set_cursor(0, 4);
+        oled_write_P(PSTR("T"), false);
+        oled_set_cursor(0, 5);
+        oled_write_P(PSTR("E"), false);
+        oled_set_cursor(0, 6);
+        oled_write_P(PSTR("R"), false);
     }
 
     return false;
