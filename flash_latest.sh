@@ -383,6 +383,53 @@ check_qmk_cli() {
     return 0
 }
 
+wait_for_serial_port() {
+    local side=$1
+    local attempt=0
+    local port
+
+    print_message "$YELLOW" "Reset the $side half into bootloader mode now." >&2
+    print_message "$BLUE" "Waiting for USB serial port..." >&2
+
+    while (( attempt < 80 )); do
+        for port in /dev/ttyACM* /dev/ttyUSB*; do
+            if [[ -e "$port" && -w "$port" ]]; then
+                echo "$port"
+                return 0
+            fi
+        done
+        sleep 0.1
+        (( attempt++ ))
+    done
+
+    return 1
+}
+
+write_split_handedness_eeprom() {
+    local side=$1
+    local eep_name="eeprom-lefthand.eep"
+    if [[ "$side" == "RIGHT" ]]; then
+        eep_name="eeprom-righthand.eep"
+    fi
+
+    local qmk_home
+    qmk_home=$(qmk config user.qmk_home -ro 2>/dev/null | sed 's/^user\.qmk_home=//')
+    if [[ -z "$qmk_home" || ! -f "$qmk_home/quantum/split_common/$eep_name" ]]; then
+        print_message "$RED" "Could not find QMK EEPROM file: quantum/split_common/$eep_name"
+        return 1
+    fi
+
+    print_message "$YELLOW" "Firmware flashed. Now reset the $side half again to write EE_HANDS EEPROM."
+    local port
+    if ! port=$(wait_for_serial_port "$side"); then
+        print_message "$RED" "Failed to find bootloader serial port for EEPROM write."
+        return 1
+    fi
+
+    print_message "$BLUE" "Writing $eep_name to $port with explicit Intel HEX format."
+    avrdude -p atmega32u4 -c avr109 -P "$port" -U "eeprom:w:$qmk_home/quantum/split_common/$eep_name:i"
+}
+
 # Function to flash the firmware to the keyboard
 flash_firmware() {
     local file=$1
@@ -419,19 +466,17 @@ flash_firmware() {
         print_message "$YELLOW" "Then put the $side half into bootloader mode by pressing the reset button."
         print_message "$YELLOW" "QMK CLI will detect the keyboard and flash it automatically."
         
-        # Build and flash the side-specific target so QMK also writes EE_HANDS
-        # handedness to EEPROM. qmk flash <hex> ignores -bl for prebuilt files.
-        local bootloader="avrdude-split-left"
-        if [[ "$side" == "RIGHT" ]]; then
-            bootloader="avrdude-split-right"
-        fi
-
-        print_message "$BLUE" "Using QMK target $QMK_KEYBOARD:$QMK_KEYMAP:$bootloader to set split handedness."
+        print_message "$BLUE" "Using QMK target $QMK_KEYBOARD:$QMK_KEYMAP:avrdude for firmware."
         print_message "$YELLOW" "For AVR EE_HANDS, this rebuilds local userspace from $SCRIPT_DIR instead of flashing the downloaded hex directly."
-        if ! (cd "$SCRIPT_DIR" && qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl "$bootloader"); then
-             print_message "$RED" "Failed to build/flash with qmk."
+        if ! (cd "$SCRIPT_DIR" && qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl avrdude); then
+             print_message "$RED" "Failed to build/flash firmware with qmk."
              print_message "$YELLOW" "The downloaded firmware was: $file"
              read -p "Press Enter once you've manually flashed the firmware..."
+             return 1
+        fi
+
+        if ! write_split_handedness_eeprom "$side"; then
+             print_message "$RED" "Failed to write $side EE_HANDS EEPROM."
              return 1
         fi
         
