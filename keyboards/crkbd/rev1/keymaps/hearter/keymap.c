@@ -200,10 +200,9 @@ static bool oled_is_left_side(void) {
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    // The right OLED is physically mounted upside down relative to the left.
-    // Rotate it 180° after side identity has been set via EE_HANDS.
+    // Right OLED is mounted vertically; rotate so text runs along its length.
     if (!oled_is_left_side()) {
-        return OLED_ROTATION_180;
+        return OLED_ROTATION_270;
     }
     return rotation;
 }
@@ -430,12 +429,13 @@ bool oled_task_user(void) {
         oled_clear();
 
         // Right OLED - static identity display. Keep it independent of layer state.
-        // Start at x=0: the right display's effective width wraps centered text.
+        // With 90/270 rotation the text grid is narrow, so stack characters along
+        // the OLED's long axis instead of writing a long horizontal string.
         oled_set_brightness(OLED_BRIGHTNESS);
-        oled_set_cursor(0, 1);
-        oled_write_P(PSTR("HEARTER"), false);
-        oled_set_cursor(0, 2);
-        oled_write_P(PSTR("crkbd"), false);
+        oled_set_cursor(2, 0);
+        oled_write_P(PSTR("H\n  E\n  A\n  R\n  T\n  E\n  R"), false);
+        oled_set_cursor(2, 9);
+        oled_write_P(PSTR("c\n  r\n  k\n  b\n  d"), false);
     }
 
     return false;
