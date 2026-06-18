@@ -37,16 +37,13 @@
 #endif
 
 /* Homerow mods configuration for fast typing */
-#define TAPPING_TERM 200   // Increase from 175 to reduce accidental activations
-#define QUICK_TAP_TERM 120 // Increase from 100 for better rollover handling
+#define TAPPING_TERM 170   // Balance fast home-row mods with accidental-roll protection
+#define QUICK_TAP_TERM 100 // Keep repeat taps responsive
 #define RETRO_TAPPING      // Send tap even if held longer than tapping term
 
 /* Tap-hold tuning for home-row mods */
 #define PERMISSIVE_HOLD // Convert nested opposite-hand chords to holds
 #define CHORDAL_HOLD    // Same-hand rolls stay taps; opposite-hand chords may hold
-
-/* Optional: Per-key tapping term for fine control */
-#define TAPPING_TERM_PER_KEY
 
 /* Fast typing optimizations */
 #define DEBOUNCE 3                // Reduce from default 5ms for faster response
