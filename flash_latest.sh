@@ -391,7 +391,7 @@ wait_for_serial_port() {
     print_message "$YELLOW" "Reset the $side half into bootloader mode now." >&2
     print_message "$BLUE" "Waiting for USB serial port..." >&2
 
-    while (( attempt < 80 )); do
+    while (( attempt < 300 )); do
         for port in /dev/ttyACM* /dev/ttyUSB*; do
             if [[ -e "$port" && -w "$port" ]]; then
                 echo "$port"
@@ -405,7 +405,22 @@ wait_for_serial_port() {
     return 1
 }
 
-write_split_handedness_eeprom() {
+qmk_home_path() {
+    qmk config user.qmk_home -ro 2>/dev/null | sed 's/^user\.qmk_home=//'
+}
+
+built_firmware_path() {
+    local qmk_home=$1
+    if [[ -f "$SCRIPT_DIR/$FIRMWARE_FILE" ]]; then
+        echo "$SCRIPT_DIR/$FIRMWARE_FILE"
+    elif [[ -f "$qmk_home/.build/$FIRMWARE_FILE" ]]; then
+        echo "$qmk_home/.build/$FIRMWARE_FILE"
+    else
+        return 1
+    fi
+}
+
+flash_avr_firmware_and_handedness() {
     local side=$1
     local eep_name="eeprom-lefthand.eep"
     if [[ "$side" == "RIGHT" ]]; then
@@ -413,21 +428,34 @@ write_split_handedness_eeprom() {
     fi
 
     local qmk_home
-    qmk_home=$(qmk config user.qmk_home -ro 2>/dev/null | sed 's/^user\.qmk_home=//')
+    qmk_home=$(qmk_home_path)
     if [[ -z "$qmk_home" || ! -f "$qmk_home/quantum/split_common/$eep_name" ]]; then
         print_message "$RED" "Could not find QMK EEPROM file: quantum/split_common/$eep_name"
         return 1
     fi
 
-    print_message "$YELLOW" "Firmware flashed. Now reset the $side half again to write EE_HANDS EEPROM."
-    local port
-    if ! port=$(wait_for_serial_port "$side"); then
-        print_message "$RED" "Failed to find bootloader serial port for EEPROM write."
+    print_message "$BLUE" "Compiling local QMK target $QMK_KEYBOARD:$QMK_KEYMAP."
+    if ! (cd "$SCRIPT_DIR" && qmk compile -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP"); then
+        print_message "$RED" "Failed to compile local firmware."
         return 1
     fi
 
-    print_message "$BLUE" "Writing $eep_name to $port with explicit Intel HEX format."
-    avrdude -p atmega32u4 -c avr109 -P "$port" -U "eeprom:w:$qmk_home/quantum/split_common/$eep_name:i"
+    local firmware_path
+    if ! firmware_path=$(built_firmware_path "$qmk_home"); then
+        print_message "$RED" "Could not find compiled firmware file: $FIRMWARE_FILE"
+        return 1
+    fi
+
+    local port
+    if ! port=$(wait_for_serial_port "$side"); then
+        print_message "$RED" "Failed to find bootloader serial port."
+        return 1
+    fi
+
+    print_message "$BLUE" "Writing firmware and $eep_name to $port."
+    avrdude -p atmega32u4 -c avr109 -P "$port" \
+        -U "flash:w:$firmware_path:i" \
+        -U "eeprom:w:$qmk_home/quantum/split_common/$eep_name:i"
 }
 
 # Function to flash the firmware to the keyboard
@@ -464,23 +492,16 @@ flash_firmware() {
         print_message "$YELLOW" "Unplug TRRS before flashing."
         print_message "$YELLOW" "Plug USB directly into the $side half only."
         print_message "$YELLOW" "Then put the $side half into bootloader mode by pressing the reset button."
-        print_message "$YELLOW" "QMK CLI will detect the keyboard and flash it automatically."
+        print_message "$YELLOW" "The script will write firmware and EE_HANDS in one avrdude pass."
         
-        print_message "$BLUE" "Using QMK target $QMK_KEYBOARD:$QMK_KEYMAP:avrdude for firmware."
         print_message "$YELLOW" "For AVR EE_HANDS, this rebuilds local userspace from $SCRIPT_DIR instead of flashing the downloaded hex directly."
-        if ! (cd "$SCRIPT_DIR" && qmk flash -kb "$QMK_KEYBOARD" -km "$QMK_KEYMAP" -bl avrdude); then
-             print_message "$RED" "Failed to build/flash firmware with qmk."
+        if ! flash_avr_firmware_and_handedness "$side"; then
+             print_message "$RED" "Failed to flash firmware and $side EE_HANDS EEPROM."
              print_message "$YELLOW" "The downloaded firmware was: $file"
-             read -p "Press Enter once you've manually flashed the firmware..."
-             return 1
-        fi
-
-        if ! write_split_handedness_eeprom "$side"; then
-             print_message "$RED" "Failed to write $side EE_HANDS EEPROM."
              return 1
         fi
         
-        print_message "$GREEN" "Successfully flashed the $side half with qmk and set EEPROM handedness."
+        print_message "$GREEN" "Successfully flashed the $side half and set EEPROM handedness."
         return 0
     else
         print_message "$RED" "Unknown flashing method: $FLASH_METHOD"
