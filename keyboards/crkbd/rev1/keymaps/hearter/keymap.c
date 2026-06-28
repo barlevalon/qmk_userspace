@@ -89,29 +89,20 @@ static bool oled_is_left_side(void);
 // Tap dance functions
 void gaming_toggle_finished(tap_dance_state_t *state, void *user_data) {
     if (state->count >= 2) {
-        // Double-tap or more: toggle the gaming layer as a temporary base
+        // Double-tap or more: toggle the gaming layer as a temporary base.
         if (layer_state_is(LAYER_GAMING)) {
             layer_move(LAYER_BASE);
         } else {
             layer_move(LAYER_GAMING);
         }
-    } else {
-        // Single tap: perform the original key function (HYPR+Space)
-        if (state->pressed) {
-            register_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
-        } else {
-            register_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
-            tap_code(KC_SPACE);
-            unregister_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
-        }
     }
 }
 
 void gaming_toggle_reset(tap_dance_state_t *state, void *user_data) {
-    // If the key was just tapped and not held, do nothing here
-    // If it was held and then released, we already sent the key in the finished function
-    if (state->count == 1 && state->pressed) {
-        unregister_mods(MOD_BIT(KC_LCTL) | MOD_BIT(KC_LALT) | MOD_BIT(KC_LGUI) | MOD_BIT(KC_LSFT)); // HYPR
+    if (state->count == 1) {
+        // Single tap: send HYPR+Space atomically. Avoid persistent
+        // register_mods()/unregister_mods() state from tap-dance timing paths.
+        tap_code16(HYPR(KC_SPACE));
     }
 }
 
