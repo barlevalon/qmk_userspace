@@ -38,6 +38,8 @@ The Mini has five thumb keys, rather than the Corne's six. Delete is on the Tab 
 - Function has F1 through F12 on the right and RGB matrix controls on the left.
 - Pointer retains trackball DPI controls, mouse buttons, drag-scroll, and sniping.
 
+On Base, the top-right outer key sends Super+Ctrl+X on a tap. Holding it for 170 ms presses F9 until release for dictation. Tap followed by hold still activates F9, and other keypresses do not shorten the hold threshold. Tab held with O remains an alternative F9 binding.
+
 On Base, the bottom-right outer key sends Hyper+Space on a single tap. Double-tapping selects Gaming. In Gaming, double-tapping the same key returns to Base.
 
 Holding Z or slash activates Pointer and enables sniping. Pointer thumb buttons are right, left, and middle click on the left half, then middle and left click on the right half. Automatic pointer-layer activation from trackball motion remains disabled.
@@ -56,10 +58,10 @@ Timing matches the wired Corne's current configuration:
 | Setting | Value |
 | --- | --- |
 | `TAPPING_TERM` | 170 ms |
-| `QUICK_TAP_TERM` | 100 ms |
+| `QUICK_TAP_TERM` | 100 ms, disabled for the dictation key |
 | `FLOW_TAP_TERM` | 150 ms |
-| `RETRO_TAPPING_PER_KEY` | Enabled except for pointer holds |
-| `PERMISSIVE_HOLD` | Enabled |
+| `RETRO_TAPPING_PER_KEY` | Enabled except for pointer holds and dictation |
+| `PERMISSIVE_HOLD_PER_KEY` | Enabled except for dictation |
 | `CHORDAL_HOLD` | Enabled |
 
 Chordal Hold protects same-hand home-row rolls. Layer-taps are exempt so thumb layers and pointer controls still support same-hand chords. Flow Tap uses QMK's default key filter, except Z and slash pointer holds remain available immediately after typing. Retro tapping excludes those two keys so using the trackball does not type a character on release.

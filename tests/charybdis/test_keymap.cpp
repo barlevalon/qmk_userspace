@@ -214,3 +214,68 @@ TEST_F(Charybdis, double_tap_enters_and_exits_gaming) {
     EXPECT_EQ(get_mods(), 0);
     EXPECT_EQ(get_weak_mods(), 0);
 }
+
+TEST_F(Charybdis, dictation_key_tap_sends_super_ctrl_x) {
+    TestDriver driver;
+    InSequence sequence;
+    auto       dictate = key(4, 0);
+
+    EXPECT_NO_REPORT(driver);
+    dictate.press();
+    idle_for(10);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI));
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI, KC_X));
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI));
+    EXPECT_EMPTY_REPORT(driver);
+    dictate.release();
+    run_one_scan_loop();
+    EXPECT_EQ(get_mods(), 0);
+    EXPECT_EQ(get_weak_mods(), 0);
+}
+
+TEST_F(Charybdis, dictation_key_hold_keeps_f9_down_until_release) {
+    TestDriver driver;
+    auto       dictate = key(4, 0);
+
+    EXPECT_NO_REPORT(driver);
+    dictate.press();
+    idle_for(TAPPING_TERM - 1);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_REPORT(driver, (KC_F9));
+    idle_for(2);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_NO_REPORT(driver);
+    idle_for(100);
+    VERIFY_AND_CLEAR(driver);
+
+    EXPECT_EMPTY_REPORT(driver);
+    dictate.release();
+    run_one_scan_loop();
+    EXPECT_EQ(get_mods(), 0);
+    EXPECT_EQ(get_weak_mods(), 0);
+}
+
+TEST_F(Charybdis, dictation_key_quick_tap_then_hold_still_holds_f9) {
+    TestDriver driver;
+    InSequence sequence;
+    auto       dictate = key(4, 0);
+
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI));
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI, KC_X));
+    EXPECT_REPORT(driver, (KC_LCTL, KC_LGUI));
+    EXPECT_EMPTY_REPORT(driver);
+    EXPECT_REPORT(driver, (KC_F9));
+    EXPECT_EMPTY_REPORT(driver);
+    tap_key(dictate);
+    idle_for(20);
+    dictate.press();
+    idle_for(TAPPING_TERM + 10);
+    dictate.release();
+    run_one_scan_loop();
+    EXPECT_EQ(get_mods(), 0);
+    EXPECT_EQ(get_weak_mods(), 0);
+}

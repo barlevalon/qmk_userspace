@@ -29,8 +29,9 @@
 /* Match the wired Corne's current home-row mod behavior. */
 #define TAPPING_TERM 170
 #define QUICK_TAP_TERM 100
+#define QUICK_TAP_TERM_PER_KEY
 #define RETRO_TAPPING_PER_KEY
-#define PERMISSIVE_HOLD
+#define PERMISSIVE_HOLD_PER_KEY
 #define CHORDAL_HOLD
 #define FLOW_TAP_TERM 150
 

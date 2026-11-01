@@ -51,7 +51,8 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 
 #define ONE_PASS G(KC_BSLS)
-#define TABS LCAG(KC_T)
+// QMK's layer-zero placeholder provides tap-hold timing; both actions are intercepted below.
+#define DICTATE LT(0, KC_NO)
 #define RAYC G(KC_SPC)
 #define LEADER TD(TD_GAMING_TOGGLE)
 #define LCRLY S(KC_LBRC)
@@ -109,8 +110,18 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 bool get_retro_tapping(uint16_t keycode, keyrecord_t *record) {
-    // Trackball movement does not cancel retro taps, so pointer holds must not emit text.
-    return keycode != PT_Z && keycode != PT_SLSH;
+    // Non-typing holds must not emit a tap action when released alone.
+    return keycode != PT_Z && keycode != PT_SLSH && keycode != DICTATE;
+}
+
+uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
+    // A shortcut tap followed by a hold must still activate dictation.
+    return keycode == DICTATE ? 0 : QUICK_TAP_TERM;
+}
+
+bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
+    // Dictation requires the full hold threshold, even if another key is tapped.
+    return keycode != DICTATE;
 }
 
 bool get_chordal_hold(uint16_t tap_hold_keycode, keyrecord_t *tap_hold_record, uint16_t other_keycode, keyrecord_t *other_record) {
@@ -129,8 +140,20 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t mod_state = get_mods();
 
-    switch(keycode) {
-        case KC_BSPC:  // Regular backspace only
+    switch (keycode) {
+        case DICTATE:
+            if (record->tap.count > 0) {
+                if (record->event.pressed) {
+                    tap_code16(LCG(KC_X));
+                }
+            } else if (record->event.pressed) {
+                register_code(KC_F9);
+            } else {
+                unregister_code(KC_F9);
+            }
+            return false;
+
+        case KC_BSPC: // Regular backspace only
             if (record->event.pressed) {
                 // Directly check if shift is active when backspace is pressed
                 if (mod_state & MOD_MASK_SHIFT) {
@@ -180,7 +203,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [LAYER_BASE] = LAYOUT(
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
-       TMUX,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,  TABS,
+       TMUX,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, DICTATE,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        KC_CAPS,  HOME_A,  HOME_S,  HOME_D,  HOME_F,    KC_G,       KC_H,  HOME_J,  HOME_K,  HOME_L,HOME_QUO, RAYC,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
