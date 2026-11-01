@@ -18,7 +18,7 @@
 
 #ifdef VIA_ENABLE
 /* VIA configuration. */
-#    define DYNAMIC_KEYMAP_LAYER_COUNT 6
+#    define DYNAMIC_KEYMAP_LAYER_COUNT 8
 #endif // VIA_ENABLE
 
 #ifndef __arm__
@@ -26,7 +26,18 @@
 #    define NO_ACTION_ONESHOT
 #endif // __arm__
 
-/* Key Override feature is enabled in rules.mk */
+/* Match the wired Corne's current home-row mod behavior. */
+#define TAPPING_TERM 170
+#define QUICK_TAP_TERM 100
+#define RETRO_TAPPING_PER_KEY
+#define PERMISSIVE_HOLD
+#define CHORDAL_HOLD
+#define FLOW_TAP_TERM 150
+
+/* Splinktegrated is pin-compatible with Splinky v3. Keep USB on the right. */
+#define MASTER_RIGHT
+#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_LED 17U
+#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 1000U
 
 /* Charybdis-specific features. */
 

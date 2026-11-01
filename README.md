@@ -8,6 +8,12 @@ This is the QMK Userspace for my custom keyboard keymaps.
 - Split keyboard with wired connection
 - 3x6 key matrix with 3 thumb keys per side
 
+### Charybdis Mini (BastardKB)
+- Splinktegrated controller, compatible with Splinky v3
+- 3x6 layout with five thumb keys and a right-hand trackball
+- [Keymap, build commands, and tests](keyboards/bastardkb/charybdis/3x6/keymaps/hearter/README.md)
+- `flash_latest.sh` remains Corne-specific
+
 ## Flashing Instructions
 
 Prerequisites:

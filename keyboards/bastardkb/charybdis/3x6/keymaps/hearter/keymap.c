@@ -16,13 +16,14 @@
  */
 #include QMK_KEYBOARD_H
 
-
 enum charybdis_keymap_layers {
     LAYER_BASE = 0,
+    LAYER_GAMING,
     LAYER_NUM,
     LAYER_SYM,
     LAYER_NAV,
     LAYER_MEDIA,
+    LAYER_FN,
     LAYER_POINTER,
 };
 
@@ -45,13 +46,14 @@ static uint16_t auto_pointer_layer_timer = 0;
 #define SYM_ENT LT(LAYER_SYM, KC_ENT)
 #define NAV_SPC LT(LAYER_NAV, KC_SPC)
 #define MED_ESC LT(LAYER_MEDIA, KC_ESC)
+#define FN_TAB LT(LAYER_FN, KC_TAB)
 #define PT_Z LT(LAYER_POINTER, KC_Z)
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 
 #define ONE_PASS G(KC_BSLS)
 #define TABS LCAG(KC_T)
 #define RAYC G(KC_SPC)
-#define LEADER HYPR(KC_SPACE)
+#define LEADER TD(TD_GAMING_TOGGLE)
 #define LCRLY S(KC_LBRC)
 #define RCRLY S(KC_RBRC)
 #define CLN S(KC_SCLN)
@@ -77,7 +79,54 @@ enum custom_keycodes {
     TMUX = SAFE_RANGE,
 };
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+enum {
+    TD_GAMING_TOGGLE,
+    TD_TO_BASE,
+};
+
+void gaming_toggle_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 2) {
+        layer_move(layer_state_is(LAYER_GAMING) ? LAYER_BASE : LAYER_GAMING);
+    }
+}
+
+void gaming_toggle_reset(tap_dance_state_t *state, void *user_data) {
+    if (state->count == 1) {
+        // An atomic tap avoids leaving Hyper modifiers registered after the dance.
+        tap_code16(HYPR(KC_SPACE));
+    }
+}
+
+void to_base_finished(tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 2) {
+        layer_move(LAYER_BASE);
+    }
+}
+
+tap_dance_action_t tap_dance_actions[] = {
+    [TD_GAMING_TOGGLE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, gaming_toggle_finished, gaming_toggle_reset),
+    [TD_TO_BASE]       = ACTION_TAP_DANCE_FN_ADVANCED(NULL, to_base_finished, NULL),
+};
+
+bool get_retro_tapping(uint16_t keycode, keyrecord_t *record) {
+    // Trackball movement does not cancel retro taps, so pointer holds must not emit text.
+    return keycode != PT_Z && keycode != PT_SLSH;
+}
+
+bool get_chordal_hold(uint16_t tap_hold_keycode, keyrecord_t *tap_hold_record, uint16_t other_keycode, keyrecord_t *other_record) {
+    // Layer chords must work on either hand, including Z/slash with pointer controls.
+    return IS_QK_LAYER_TAP(tap_hold_keycode) || get_chordal_hold_default(tap_hold_record, other_record);
+}
+
+uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
+    // Keep pointer-layer holds available immediately after typing.
+    if (keycode == PT_Z || keycode == PT_SLSH) {
+        return 0;
+    }
+    return is_flow_tap_key(keycode) && is_flow_tap_key(prev_keycode) ? FLOW_TAP_TERM : 0;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t mod_state = get_mods();
 
     switch(keycode) {
@@ -137,7 +186,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        ONE_PASS,   PT_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, PT_SLSH, LEADER,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  MED_ESC, NAV_SPC, KC_TAB,    SYM_ENT, NUM_BSPC
+                                  MED_ESC, NAV_SPC, FN_TAB,    SYM_ENT, NUM_BSPC
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 
@@ -157,7 +206,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
        XXXXXXX, LCRLY, S(KC_7),  S(KC_8),  S(KC_9), RCRLY,      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-       XXXXXXX, CLN,   S(KC_4),  S(KC_5),  S(KC_6), KC_PPLS,    XXXXXXX, KC_RSFT, KC_RGUI, KC_RALT, KC_RCTL, XXXXXXX,
+       XXXXXXX, CLN,   S(KC_4),  S(KC_5),  S(KC_6), KC_PLUS,    XXXXXXX, KC_RSFT, KC_RGUI, KC_RALT, KC_RCTL, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, TLD,   S(KC_1),  S(KC_2),  S(KC_3),    PIPE,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
@@ -173,13 +222,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    KC_END,  KC_PGDN, KC_PGUP, KC_HOME, XXXXXXX, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  XXXXXXX, _______, XXXXXXX,    KC_ENT,  KC_BSPC
+                                  XXXXXXX, _______, KC_DEL,     KC_ENT,  KC_BSPC
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 
   [LAYER_MEDIA] = LAYOUT(
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
-       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+       XXXXXXX, XXXXXXX, KC_PSCR, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX,    KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, XXXXXXX, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
@@ -187,6 +236,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
                                   _______, XXXXXXX, XXXXXXX,    KC_MSTP, KC_MPLY
   //                            ╰───────────────────────────╯ ╰──────────────────╯
+  ),
+
+  [LAYER_FN] = LAYOUT(
+       QK_BOOT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, KC_F7,   KC_F8,   KC_F9,   KC_F12,  QK_BOOT,
+       XXXXXXX, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX,    XXXXXXX, KC_F4,   KC_F5,   KC_F6,   KC_F11,  XXXXXXX,
+       XXXXXXX, XXXXXXX, RM_TOGG, RM_HUEU, RM_SATU, RM_VALU,    XXXXXXX, KC_F1,   KC_F2,   KC_F3,   KC_F10,  XXXXXXX,
+                                  RM_NEXT, RM_NEXT, RM_PREV,    XXXXXXX, XXXXXXX
+  ),
+
+  [LAYER_GAMING] = LAYOUT(
+       KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_F12,
+       KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L,    KC_QUOT, XXXXXXX,
+       KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, TD(TD_TO_BASE),
+                                  KC_SPC, KC_LALT, LT(LAYER_NUM, KC_ESC), KC_ENT, KC_BSPC
   ),
 
   [LAYER_POINTER] = LAYOUT(
@@ -197,7 +260,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        XXXXXXX, _______, DRGSCRL, SNIPING, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, SNIPING, DRGSCRL, _______, XXXXXXX,
   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                                  KC_BTN2, KC_BTN1, KC_BTN3,    KC_BTN3, KC_BTN1
+                                  MS_BTN2, MS_BTN1, MS_BTN3,    MS_BTN3, MS_BTN1
   //                            ╰───────────────────────────╯ ╰──────────────────╯
   ),
 };
